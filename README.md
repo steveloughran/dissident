@@ -13,9 +13,9 @@ party members.
 ## Setup
 
 ### Software
-```bash
-gem install twitter
-```
+
+There's a gemfile set up for ruby dependencies; `bundle install` will
+handle that
 
 ### Config
 
