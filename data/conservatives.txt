@@ -1,0 +1,14 @@
+# Example messages.
+# Empty lines and lines which begin with "#" are ignored; the rest are comments.
+
+No party with Boris Johnson in cabinet can accuse other parties of bringing chaos
+In 2015 Cameron promised order over Miliband's Chaos. That didn't work, did it?
+Your hard Brexit plans mean you cant use the "chaos and economic disaster" threats this year
+Crush the Saboteurs! Especially remain voters in your own party!
+Why is @theresa_may scared to debate Jeremy Corbyn?
+Why no manifesto promise of £350M/week for the NHS?
+Why an election before the police have finished investigating the last?
+Why no tax freeze? Is an Emergency Budget planned?
+
+
+
