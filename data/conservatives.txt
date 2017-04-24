@@ -1,6 +1,4 @@
-# Example messages.
-# Empty lines and lines which begin with "#" are ignored; the rest are comments.
-
+# Set of messages targeted at the user "conservatives"
 No party with Boris Johnson in cabinet can accuse other parties of bringing chaos
 In 2015 Cameron promised order over Miliband's Chaos. That didn't work, did it?
 Your hard Brexit plans mean you cant use the "chaos and economic disaster" threats this year
