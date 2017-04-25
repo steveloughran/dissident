@@ -14,8 +14,9 @@ class Heckles
   # here are the heckles for a user
   
   def init(username)
-    @phrases = Array.new 
-    filename = "data/#{username}.txt"
+    @phrases = Array.new
+    username = username.downcase
+    filename = "data/#{username}.txt".downcase
     if not File.file?(filename) 
       puts "No data file #{filename}"
       return false
@@ -57,6 +58,8 @@ class Dissident
   
 
   def reply(tweet)
+    puts "incoming tweet: #{tweet.user.screen_name}: #{tweet.full_text} in reply to \"#{tweet.in_reply_to_user_id}\" "
+    
     return unless tweet.in_reply_to_status_id.is_a?(Twitter::NullObject)
     username = tweet.user.screen_name
     return if username.eql?@myname
@@ -71,21 +74,24 @@ class Dissident
       @rest.update(status, in_reply_to_status_id: tweet.id)
     end
   end
-
+  
+  # process a tweet *or other event*. 
+  def process(event) 
+    case event
+    when Twitter::Tweet
+      reply(event)
+    when Twitter::DirectMessage
+      puts "Direct message from #{event.user.screen_name}: #{event.full_text}"
+    when Twitter::Streaming::StallWarning
+      warn "Falling behind!"
+    end
+  end
+  
+  # Listen to streaming events and process them
   def listen
     puts "ready"
-
-    @streaming.user do |object|
-      case object
-      when Twitter::Tweet
-        tweet = object
-        puts "tweet: #{tweet.user.screen_name}: #{tweet.text} in reply to \"#{tweet.in_reply_to_user_id}\" "
-        reply(tweet)
-      when Twitter::DirectMessage
-        puts "Ignoring direct message from #{tweet.user.screen_name}: #{tweet.text}"
-      when Twitter::Streaming::StallWarning
-        warn "Falling behind!"
-      end
+    @streaming.user do |event|
+       process(event)
     end
   end
   
