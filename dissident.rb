@@ -43,15 +43,17 @@ class Heckles
   end
 end
 
+# This is the class which does all the work
 class Dissident
 
+  # startup: inits the clients. It does not attempt to talk to Twitter though,
+  # so invalid credentials are not picked up
   def initialize
     config = eval(File.open('conf/secrets.rb') {|f| f.read })
     @rest = Twitter::REST::Client.new(config)
     @streaming = Twitter::Streaming::Client.new(config)
     @myname = "dissidentbot"
   end
-  
 
   # Generate a reply for the given user, if they are targeted and it is not a reply
   # the latter keeps the noise down, and avoids loops.
@@ -69,7 +71,7 @@ class Dissident
       puts "Reply too long at #{status.length}: #{status}"
     else
       puts "tweeting #{status}"
-      @rest.update(status, in_reply_to_status_id: tweet.id)
+      @rest.update(status, in_reply_to_status_id: tweet.id)      
     end
   end
 
@@ -80,6 +82,7 @@ class Dissident
     return elements[0]
   end
   
+  # the list of targets
   def targets
     return Dir["data/*.txt"]
   end
@@ -89,10 +92,12 @@ class Dissident
     return targets().length
   end
     
+  # Say anything on twitter
   def say(message)
     @rest.update(message)
   end
   
+  # Build the startup message
   def startup_message()
     t = Time.now.utc
     return "Dissenting from #{target_count} accounts on host #{shortname} at #{t.getlocal}"
@@ -121,6 +126,7 @@ class Dissident
     end
   end
 
+  # main() entry point
   def main(args)
     usage = "Usage: dissident start"
     if args.length == 0
@@ -136,7 +142,6 @@ class Dissident
     end
   end
   
-
 end
 
 # this is where the work is started
