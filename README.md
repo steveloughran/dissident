@@ -16,7 +16,7 @@ handle that
 ### Getting up and running
 
 1. Get a Twitter Appliciation API credential set from [Twitter Application Management](https://apps.twitter.com/). You need your own so you can do your own thing, not throttle other people's work, exercise your right to modify the code, etc.
-1. Get a 
+1. Ask for Read, Write and Direct Message permissions, then generate the consumer and access tokens and secrets.
 1. Copy `conf/example-secrets.rb` to `conf/secrets.rb`. That is marked as gitignored, so doesn't get checked in unles you try very hard.
 1. Configure `secrets.rb` with your secrets. That file is loaded via `eval()` BTW.
 1. Start the bot: `ruby dissident.rb`
