@@ -72,8 +72,6 @@ class Dissident
     end
   end
 
-# client.update("Dissent is a right; dissent is a duty")
-
   def listen
     puts "ready"
 
@@ -84,7 +82,7 @@ class Dissident
         puts "tweet: #{tweet.user.screen_name}: #{tweet.text} in reply to \"#{tweet.in_reply_to_user_id}\" "
         reply(tweet)
       when Twitter::DirectMessage
-        puts "It's a direct message!"
+        puts "Ignoring direct message from #{tweet.user.screen_name}: #{tweet.text}"
       when Twitter::Streaming::StallWarning
         warn "Falling behind!"
       end
@@ -94,5 +92,5 @@ class Dissident
 
 end
 
-
+# this is where the work is started
 Dissident.new().listen
