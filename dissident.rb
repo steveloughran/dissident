@@ -1,17 +1,13 @@
 #!/usr/bin/env ruby -w
 # Dissident
 
-
-# Credits: https://github.com/sferik/twitter
-# https://rudk.ws/2016/11/01/implementing-twitter-bot-using-ruby/ and https://gist.github.com/rudkovskyi/3ae5baf4850ad70293814897252914b7
-
-
-
 require 'twitter'
+require 'socket'
 
+
+# here are the heckles for a user
+# designed so that they can be isolated/persisted if need be
 class Heckles
-  
-  # here are the heckles for a user
   
   def init(username)
     @phrases = Array.new
@@ -30,7 +26,7 @@ class Heckles
         if line.length < 140
           @phrases << line
         else
-          puts "LINE too long"
+          puts "**LINE too long**"
         end
       end     
     end
@@ -57,6 +53,7 @@ class Dissident
   end
   
 
+  # Generate a reply for he tuser
   def reply(tweet)
     puts "incoming tweet: #{tweet.user.screen_name}: #{tweet.full_text} in reply to \"#{tweet.in_reply_to_user_id}\" "
     
@@ -74,7 +71,32 @@ class Dissident
       @rest.update(status, in_reply_to_status_id: tweet.id)
     end
   end
+
+  # get the shortname of this host for reporting
+  def shortname
+    fqdn = Socket.gethostname
+    elements = fqdn.split(".")
+    return elements[0]
+  end
   
+  def targets
+    return Dir["data/*.txt"]
+  end
+  
+  # get a count of targets
+  def target_count
+    return targets().length
+  end
+    
+  def say(message)
+    @rest.update(message)
+  end
+  
+  def startup_message()
+    t = Time.now.utc
+    return "Dissenting from #{target_count} accounts on host #{shortname} at #{t.getlocal}"
+  end
+      
   # process a tweet *or other event*. 
   def process(event) 
     case event
@@ -86,14 +108,24 @@ class Dissident
       warn "Falling behind!"
     end
   end
-  
+
   # Listen to streaming events and process them
   def listen
-    puts "ready"
-    @rest.update("dissident is ready")
+    message = startup_message
+    puts message
+    say(message)
     
     @streaming.user do |event|
        process(event)
+    end
+  end
+
+
+  def main(args)
+    return if args.length == 0
+    command = args[0]
+    if (command == "start") 
+      listen
     end
   end
   
@@ -101,4 +133,6 @@ class Dissident
 end
 
 # this is where the work is started
-Dissident.new().listen
+# split so that irb sessions have access to the dissident
+d = Dissident.new()
+d.main(ARGV)
