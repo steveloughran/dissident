@@ -90,6 +90,8 @@ class Dissident
   # Listen to streaming events and process them
   def listen
     puts "ready"
+    @rest.update("dissident is ready")
+    
     @streaming.user do |event|
        process(event)
     end
