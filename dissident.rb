@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby -w
-# Dissident
+# to run: dissident start
 
 require 'twitter'
 require 'socket'
@@ -53,7 +53,8 @@ class Dissident
   end
   
 
-  # Generate a reply for he tuser
+  # Generate a reply for the given user, if they are targeted and it is not a reply
+  # the latter keeps the noise down, and avoids loops.
   def reply(tweet)
     puts "incoming tweet: #{tweet.user.screen_name}: #{tweet.full_text} in reply to \"#{tweet.in_reply_to_user_id}\" "
     
@@ -120,12 +121,18 @@ class Dissident
     end
   end
 
-
   def main(args)
-    return if args.length == 0
-    command = args[0]
-    if (command == "start") 
-      listen
+    usage = "Usage: dissident start"
+    if args.length == 0
+      puts usage
+    else
+      command = args[0]
+      if (command == "start") 
+        listen
+      else
+        puts "Unknown action #{command}"
+        puts usage
+      end
     end
   end
   
