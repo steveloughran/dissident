@@ -9,28 +9,28 @@ require 'logger'
 # here are the heckles for a user
 # designed so that they can be isolated/persisted if need be
 class Heckles
-  
   def init(username)
     @phrases = Array.new
+    log = Logger.new(STDOUT)
+    log.level = Logger::DEBUG
     filename = "data/#{username}.txt".downcase
     if not File.file?(filename) 
-      log "No data file #{filename}"
+      log.info "No data file #{filename}"
       return false
     end
-    
-    log "Reading #{filename}"
+    log.info "Reading #{filename}"
     File.open(filename).readlines.each do | line |
       line.strip!
       if not line.empty? and not line.start_with?("\#")
-        log "#{line.length}: #{line}"
+        log.info "#{line.length}: #{line}"
         if line.length < 140
           @phrases << line
         else
-          log "**LINE too long**"
+          log.info "**LINE too long**"
         end
       end     
     end
-    log "Found #{@phrases.length} entries"
+    log.info "Found #{@phrases.length} entries"
     return true
   end
   
@@ -169,7 +169,7 @@ class Dissident
       lives = lives - 1
       retry if lives > 0
     ensure
-      log "ending"
+      say("#{@hostname} shutting down")
     end
   end
 
