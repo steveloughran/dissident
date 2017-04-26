@@ -59,7 +59,6 @@ class Dissident
     @hostname = shortname()
     @log = Logger.new(STDOUT)
     @log.level = Logger::INFO
-    
   end
   
   def log(message)
@@ -69,21 +68,33 @@ class Dissident
   # Generate a reply for the given user, if they are targeted and it is not a reply
   # the latter keeps the noise down, and avoids loops.
   def reply(tweet)
-    log "incoming tweet: #{tweet.user.screen_name}: #{tweet.text} in reply to \"#{tweet.in_reply_to_user_id}\" "
-    
+    sender = tweet.user.screen_name.downcase
+    text = tweet.text    
+    log "incoming tweet: #{tweet.user.screen_name}: #{text} in reply to \"#{tweet.in_reply_to_user_id}\" "
     return unless tweet.in_reply_to_status_id.is_a?(Twitter::NullObject)
-    username = tweet.user.screen_name.downcase
-    return if username.eql?@myname
+    return if sender.eql?@myname
+    hecklename = build_target(tweet.user.screen_name, text)
     heckles = Heckles.new()
-    heckles.init(username)
-    return if heckles.empty?
-    status = "@#{username} #{heckles.heckle}"
+    heckles.init(hecklename)
+    return if heckles.empty? 
+    status = "@#{sender} #{heckles.heckle}"
+    reply_to(tweet.id, status)
+  end
+  
+  # there's a bug here, if you look hard
+  def build_target(username, text)
+    username = username.downcase
+    username = "self" if not text.index("@#{@myname}").nil?
+    return username
+  end
+    
+  def reply_to(status_id, status)
     if status.length > 140
       @log.warn "Reply too long at #{status.length}: #{status}"
     else
       log "tweeting #{status}"
       @sent_count = @sent_count + 1
-      @rest.update(status, in_reply_to_status_id: tweet.id)      
+      @rest.update(status, in_reply_to_status_id: status_id)      
     end
   end
   
@@ -101,7 +112,7 @@ class Dissident
     return s
   end
   
-  # incoming is 
+  # incoming direct message
   def on_direct_message(event)
     user = event.sender
     username = user.screen_name.downcase
@@ -111,13 +122,10 @@ class Dissident
     log "Response: #{response}"
     @rest.create_direct_message(user, response)
   end
-  
 
   # get the shortname of this host for reporting
   def shortname
-    fqdn = Socket.gethostname
-    elements = fqdn.split(".")
-    return elements[0]
+    return Socket.gethostname.split(".")[0]
   end
   
   # the list of targets
