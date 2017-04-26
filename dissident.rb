@@ -3,6 +3,7 @@
 
 require 'twitter'
 require 'socket'
+require 'logger'
 
 
 # here are the heckles for a user
@@ -13,23 +14,23 @@ class Heckles
     @phrases = Array.new
     filename = "data/#{username}.txt".downcase
     if not File.file?(filename) 
-      puts "No data file #{filename}"
+      log "No data file #{filename}"
       return false
     end
     
-    puts "Reading #{filename}"
+    log "Reading #{filename}"
     File.open(filename).readlines.each do | line |
       line.strip!
       if not line.empty? and not line.start_with?("\#")
-        puts "#{line.length}: #{line}"
+        log "#{line.length}: #{line}"
         if line.length < 140
           @phrases << line
         else
-          puts "**LINE too long**"
+          log "**LINE too long**"
         end
       end     
     end
-    puts "Found #{@phrases.length} entries"
+    log "Found #{@phrases.length} entries"
     return true
   end
   
@@ -56,12 +57,19 @@ class Dissident
     @start_local_time = @started.getlocal
     @sent_count = 0
     @hostname = shortname()
+    @log = Logger.new(STDOUT)
+    @log.level = Logger::INFO
+    
+  end
+  
+  def log(message)
+    @log.info(message)
   end
 
   # Generate a reply for the given user, if they are targeted and it is not a reply
   # the latter keeps the noise down, and avoids loops.
   def reply(tweet)
-    puts "incoming tweet: #{tweet.user.screen_name}: #{tweet.text} in reply to \"#{tweet.in_reply_to_user_id}\" "
+    log "incoming tweet: #{tweet.user.screen_name}: #{tweet.text} in reply to \"#{tweet.in_reply_to_user_id}\" "
     
     return unless tweet.in_reply_to_status_id.is_a?(Twitter::NullObject)
     username = tweet.user.screen_name.downcase
@@ -71,9 +79,9 @@ class Dissident
     return if heckles.empty?
     status = "@#{username} #{heckles.heckle}"
     if status.length > 140
-      puts "Reply too long at #{status.length}: #{status}"
+      @log.warn "Reply too long at #{status.length}: #{status}"
     else
-      puts "tweeting #{status}"
+      log "tweeting #{status}"
       @sent_count = @sent_count + 1
       @rest.update(status, in_reply_to_status_id: tweet.id)      
     end
@@ -98,8 +106,9 @@ class Dissident
     user = event.sender
     username = user.screen_name.downcase
     return if username.eql?@myname
-    puts "Direct message from #{user.screen_name}: #{event.text}"
+    log "Direct message from #{user.screen_name}: #{event.text}"
     response = build_direct_message(event.text)
+    log "Response: #{response}"
     @rest.create_direct_message(user, response)
   end
   
@@ -123,7 +132,7 @@ class Dissident
     
   # Say anything on twitter
   def say(message)
-    puts message
+    log message
     @rest.update(message)
   end
   
@@ -140,17 +149,27 @@ class Dissident
     when Twitter::DirectMessage
       on_direct_message(event)
     when Twitter::Streaming::StallWarning
-      warn "Falling behind!"
+      @log.warn "Falling behind!"
     else
-      puts "Other event #{event}"
+      log "Other event #{event}"
     end
   end
 
   # Listen to streaming events and process them
   def listen
+    lives = 10
     say(startup_message())
-    @streaming.user do |event|
-       process(event)
+    begin
+      @streaming.user do |event|
+         process(event)
+      end
+    rescue StandardError => err
+      # dubious about this
+      @log.warn(err)
+      lives = lives - 1
+      retry if lives > 0
+    ensure
+      log "ending"
     end
   end
 
@@ -158,14 +177,14 @@ class Dissident
   def main(args)
     usage = "Usage: dissident start"
     if args.length == 0
-      puts usage
+      log usage
     else
       command = args[0]
       if (command == "start") 
         listen
       else
-        puts "Unknown action #{command}"
-        puts usage
+        log "Unknown action #{command}"
+        log usage
       end
     end
   end
