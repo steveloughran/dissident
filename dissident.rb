@@ -11,7 +11,6 @@ class Heckles
   
   def init(username)
     @phrases = Array.new
-    username = username.downcase
     filename = "data/#{username}.txt".downcase
     if not File.file?(filename) 
       puts "No data file #{filename}"
@@ -53,15 +52,18 @@ class Dissident
     @rest = Twitter::REST::Client.new(config)
     @streaming = Twitter::Streaming::Client.new(config)
     @myname = "dissidentbot"
+    @started = Time.now.utc
+    @sent_count = 0
+    @hostname = shortname()
   end
 
   # Generate a reply for the given user, if they are targeted and it is not a reply
   # the latter keeps the noise down, and avoids loops.
   def reply(tweet)
-    puts "incoming tweet: #{tweet.user.screen_name}: #{tweet.full_text} in reply to \"#{tweet.in_reply_to_user_id}\" "
+    puts "incoming tweet: #{tweet.user.screen_name}: #{tweet.text} in reply to \"#{tweet.in_reply_to_user_id}\" "
     
     return unless tweet.in_reply_to_status_id.is_a?(Twitter::NullObject)
-    username = tweet.user.screen_name
+    username = tweet.user.screen_name.downcase
     return if username.eql?@myname
     heckles = Heckles.new()
     heckles.init(username)
@@ -71,9 +73,35 @@ class Dissident
       puts "Reply too long at #{status.length}: #{status}"
     else
       puts "tweeting #{status}"
+      @started = @started + 1
       @rest.update(status, in_reply_to_status_id: tweet.id)      
     end
   end
+  
+  def build_direct_message(command)
+    command.downcase.strip!
+    s = "#{@hostname}: "
+    case command
+    when "status"
+      s = s + "started #{@started}; targets #{target_count}; sent: #{@sent_count}"
+    when "targets"
+      s = s + targets.join(", ")
+    else
+      s = s + "usage: status | targets"
+    end
+    return s
+  end
+  
+  # incoming is 
+  def on_direct_message(event)
+    user = event.sender
+    username = user.screen_name.downcase
+    return if username.eql?@myname
+    puts "Direct message from #{user.screen_name}: #{event.text}"
+    response = build_direct_message(event.text)
+    @rest.create_direct_message(user, response)
+  end
+  
 
   # get the shortname of this host for reporting
   def shortname
@@ -100,7 +128,7 @@ class Dissident
   # Build the startup message
   def startup_message()
     t = Time.now.utc
-    return "Dissenting from #{target_count} accounts on host #{shortname} at #{t.getlocal}"
+    return "Dissenting from #{target_count} accounts on host #{@hostname} at #{t.getlocal}"
   end
       
   # process a tweet *or other event*. 
@@ -109,7 +137,7 @@ class Dissident
     when Twitter::Tweet
       reply(event)
     when Twitter::DirectMessage
-      puts "Direct message from #{event.user.screen_name}: #{event.full_text}"
+      on_direct_message(event)
     when Twitter::Streaming::StallWarning
       warn "Falling behind!"
     end
