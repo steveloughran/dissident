@@ -53,6 +53,7 @@ class Dissident
     @streaming = Twitter::Streaming::Client.new(config)
     @myname = "dissidentbot"
     @started = Time.now.utc
+    @start_local_time = @started.getlocal
     @sent_count = 0
     @hostname = shortname()
   end
@@ -73,7 +74,7 @@ class Dissident
       puts "Reply too long at #{status.length}: #{status}"
     else
       puts "tweeting #{status}"
-      @started = @started + 1
+      @sent_count = @sent_count + 1
       @rest.update(status, in_reply_to_status_id: tweet.id)      
     end
   end
@@ -83,7 +84,7 @@ class Dissident
     s = "#{@hostname}: "
     case command
     when "status"
-      s = s + "started #{@started}; targets #{target_count}; sent: #{@sent_count}"
+      s = s + "started #{@start_local_time}; targets #{target_count}; sent: #{@sent_count}"
     when "targets"
       s = s + targets.join(", ")
     else
@@ -122,16 +123,16 @@ class Dissident
     
   # Say anything on twitter
   def say(message)
+    puts message
     @rest.update(message)
   end
   
   # Build the startup message
-  def startup_message()
-    t = Time.now.utc
-    return "Dissenting from #{target_count} accounts on host #{@hostname} at #{t.getlocal}"
+  def startup_message
+    return "Dissenting from #{target_count} accounts on host #{@hostname} at #{@start_local_time}"
   end
       
-  # process a tweet *or other event*. 
+  # process a tweet or other event. 
   def process(event) 
     case event
     when Twitter::Tweet
@@ -140,15 +141,14 @@ class Dissident
       on_direct_message(event)
     when Twitter::Streaming::StallWarning
       warn "Falling behind!"
+    else
+      puts "Other event #{event}"
     end
   end
 
   # Listen to streaming events and process them
   def listen
-    message = startup_message
-    puts message
-    say(message)
-    
+    say(startup_message())
     @streaming.user do |event|
        process(event)
     end
@@ -173,6 +173,6 @@ class Dissident
 end
 
 # this is where the work is started
-# split so that irb sessions have access to the dissident
+# split so that irb sessions have access to the dissident instances without it starting to listen
 d = Dissident.new()
 d.main(ARGV)
