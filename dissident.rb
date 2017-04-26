@@ -165,6 +165,7 @@ class Dissident
 
   # Listen to streaming events and process them
   def listen
+    log "starting to listen"
     lives = 10
     say(startup_message())
     begin
@@ -183,6 +184,7 @@ class Dissident
 
   # main() entry point
   def main(args)
+    log "dissidentbot booting"
     usage = "Usage: dissident start"
     if args.length == 0
       log usage
