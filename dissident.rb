@@ -137,7 +137,7 @@ class Dissident
   
   # add some jitter
   def sleep_slightly()
-    sleeptime = 10 + rand @sleeptime
+    sleeptime = 10 + rand(@sleeptime)
     log "sleeping for #{sleeptime}s before posting"
     sleep sleeptime
   end
