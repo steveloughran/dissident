@@ -10,14 +10,16 @@ to heckle from their accounts, we can have a nice set of dissenters out there re
 
 ### Software
 
-There's a gemfile set up for ruby dependencies; `bundle install` will
-handle that
+
+Install Ruby 2.4 on your system. This takes a while to build for a Pi, but can be done.
+
+There's a gemfile set up for ruby dependencies; `bundle install` will handle that.
+
 
 ### Getting up and running
 
 1. Get a Twitter Appliciation API credential set from [Twitter Application Management](https://apps.twitter.com/). You need your own so you can do your own thing, not throttle other people's work, exercise your right to modify the code, etc.
 1. Ask for Read, Write and Direct Message permissions, then generate the consumer and access tokens and secrets.
-1. Install Ruby 2.4 on your system. This takes a while to build for a Pi, but can be done.
 1. Copy `conf/example-secrets.rb` to `conf/secrets.rb`. That is marked as gitignored, so doesn't get checked in unles you try very hard.
 1. Configure `secrets.rb` with your secrets. That file is loaded via `eval()` BTW.
 1. Add your user/bot name to the `:myname` entry in `conf/secrets.rb`
@@ -47,6 +49,7 @@ of cache data structure.
 Twitter users hate spam; twitter hates spam. And abuse. Don't.
 
 Twitter's spam filters try to detect the behaviour of robots spamming people, and can often confuse "exercising your democratic right to dissent" with "spamming people"
+
 * Including Links in your messages triggers blockage; better to leave out.
 * There's configurable probability of responding and a sleep time before response, to make your bot less annoying
 * Don't heckle lots of people.
