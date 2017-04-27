@@ -5,6 +5,12 @@ Dissident: ruby based twitter dissident bot
 This is something designed to listen to a Twitter account and heckle. If enough people run this and set it
 to heckle from their accounts, we can have a nice set of dissenters out there ready to respond fast to any post by the party members.
 
+It has a primitive Direct Message management API, and can have the targets and messages to send dynamically changed while running.
+
+![Ths is me!](/images/dissidentbot.jpg)
+
+And it's lightweight enough for this all to work on a Raspberry Pi, which is where it runs.
+
 
 ## Setup
 
@@ -44,14 +50,51 @@ You do not need to restart the bot to add/remove users, or to change the message
 for a user, and their message file read, *for every tweet*. It's easier to do this than implement some kind
 of cache data structure.
 
-*Twitter's Spam Detector*
+#### Replying to direct messages: the admin API
+
+Anyone who can DM the bot can send admin messages, of which there are currently two
+
+`status`: send a status update, such as
+
+    piball: started 2017-04-27 17:47:15 +0100; targets 7; sent: 0; dropped 0; ignored: 1
+
+`targets` lists the target files; it could be improved
+
+To use these: have the bot follow you, then DM it.
+
+#### Replying to mentions
+
+The bot will reply to any message with its handle it, picking a message from `data/self.txt`
+
+* Replies are ignored, only simple tweets. This stops loops
+* You need to configure the name of the bot in secrets.rb, in the field `:myname`.
+
+If you don't want the bot to reply, delete the `self.txt` file. Or comment out the values with a `#` at the start
+of each line.
+
+
+#### Debugging
+
+Run `irb` then read in the file
+
+    source("./dissident.rb")
+
+This instantiates and configures the bot instance, but doesn't start it running. You can refer to it in the variable `bot`
+
+    bot.say("hello, world")
+    bot.build_direct_message "status"
+    bot.build_reply("borisjohnson", "jolly good!")
+
+I've tried to split up the message parse/response generation logic from the actual IO, to help debug what's going on.
+
+#### Twitter's Spam Detector
 
 Twitter users hate spam; twitter hates spam. And abuse. Don't.
 
 Twitter's spam filters try to detect the behaviour of robots spamming people, and can often confuse "exercising your democratic right to dissent" with "spamming people"
 
 * Including Links in your messages triggers blockage; better to leave out.
-* There's configurable probability of responding and a sleep time before response, to make your bot less annoying
+* There's hard-coded probability of responding and a sleep time before response, to make your bot less annoying
 * Don't heckle lots of people.
 * The more actual followers you have, the more Twitter *may* let you post to others.
 * The more people you have heckling the same politicians with different messages, the more you can pull back your own heckle rate, so behave more sociably.
@@ -60,14 +103,17 @@ Abuse is an issue too: people will complain, you will have a warning, then your 
 
 ## Nice future features
 
-* making my own name configurable in the config file
-* posting images
-* keywords for every heckle, something like:
+* Posting images
+* Fixing the logging
+* Tests
+* Keywords for every heckle, something like:
 
 			chaos, boris => Boris is a source of chaos
 			boris => Boris should have stuck to bike lanes
 			scotland => How you claim to represent the UK when a whole country hates you?
+* Variables in messages: our name, sender, time,
 
+Contributions welcome as pull requests.
 
 ## Acknowledgements
 

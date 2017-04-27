@@ -56,7 +56,7 @@ class Dissident
     @streaming = Twitter::Streaming::Client.new(@config)
     @log.debug "config is #{@config}"
     @myname = @config[:myname]
-    if @myname.nil? or myname.length == 0
+    if @myname.nil? or @myname.length == 0
       @log.warn "Configuration doesn't include :myname entry"
       @myname = "@dissidentbot"
     end
@@ -67,7 +67,7 @@ class Dissident
     @dropped_count = 0
     @ignored_count = 0
     @hostname = shortname()
-    @reply_probability = 80
+    @reply_probability = 90
     @sleeptime = 10
   end
   
@@ -132,12 +132,12 @@ class Dissident
   
   # should the bot reply at all?  
   def should_reply()
-    return rand(100) < @reply_probability
+    return rand(100) <= @reply_probability
   end
   
   # add some jitter
   def sleep_slightly()
-    sleeptime = random @sleeptime
+    sleeptime = rand @sleeptime
     log "sleeping for #{sleeptime}s before posting"
     sleep sleeptime
   end
@@ -261,5 +261,5 @@ end
 
 # this is where the work is started
 # split so that irb sessions have access to the dissident instances without it starting to listen
-d = Dissident.new()
-d.main(ARGV)
+bot = Dissident.new()
+bot.main(ARGV)
