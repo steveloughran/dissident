@@ -7,7 +7,7 @@ to heckle from their accounts, we can have a nice set of dissenters out there re
 
 It has a primitive Direct Message management API, and can have the targets and messages to send dynamically changed while running.
 
-![Ths is me!](/images/dissidentbot.jpg)
+![Ths is me!](/images/dissidentbot.png)
 
 And it's lightweight enough for this all to work on a Raspberry Pi, which is where it runs.
 
