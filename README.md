@@ -17,9 +17,10 @@ handle that
 
 1. Get a Twitter Appliciation API credential set from [Twitter Application Management](https://apps.twitter.com/). You need your own so you can do your own thing, not throttle other people's work, exercise your right to modify the code, etc.
 1. Ask for Read, Write and Direct Message permissions, then generate the consumer and access tokens and secrets.
+1. Install Ruby 2.4 on your system. This takes a while to build for a Pi, but can be done.
 1. Copy `conf/example-secrets.rb` to `conf/secrets.rb`. That is marked as gitignored, so doesn't get checked in unles you try very hard.
 1. Configure `secrets.rb` with your secrets. That file is loaded via `eval()` BTW.
-1. Until I can get my ruby hash lookup working (help!) set your twitter handle in Dissident.initialize(). This is used to fiter out tweet and DM loopbacks.
+1. Add your user/bot name to the `:myname` entry in `conf/secrets.rb`
 1. Start the bot: `ruby dissident.rb start`
 
 ```bash
@@ -41,11 +42,23 @@ You do not need to restart the bot to add/remove users, or to change the message
 for a user, and their message file read, *for every tweet*. It's easier to do this than implement some kind
 of cache data structure.
 
+*Twitter's Spam Detector*
+
+Twitter users hate spam; twitter hates spam. And abuse. Don't.
+
+Twitter's spam filters try to detect the behaviour of robots spamming people, and can often confuse "exercising your democratic right to dissent" with "spamming people"
+* Including Links in your messages triggers blockage; better to leave out.
+* There's configurable probability of responding and a sleep time before response, to make your bot less annoying
+* Don't heckle lots of people.
+* The more actual followers you have, the more Twitter *may* let you post to others.
+* The more people you have heckling the same politicians with different messages, the more you can pull back your own heckle rate, so behave more sociably.
+
+Abuse is an issue too: people will complain, you will have a warning, then your account destroyed. Don't do it: it is not constructive. Your goal should be to have the bot respond early to politicians posts, flagging up their hypocricy and lies, rather than just calling them out for being wankers breaking the country for their own selfish career goals, no matter what you feel about Boris.
 
 ## Nice future features
 
 * making my own name configurable in the config file
-* Linking to images
+* posting images
 * keywords for every heckle, something like:
 
 			chaos, boris => Boris is a source of chaos
