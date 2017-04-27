@@ -19,10 +19,11 @@ handle that
 1. Ask for Read, Write and Direct Message permissions, then generate the consumer and access tokens and secrets.
 1. Copy `conf/example-secrets.rb` to `conf/secrets.rb`. That is marked as gitignored, so doesn't get checked in unles you try very hard.
 1. Configure `secrets.rb` with your secrets. That file is loaded via `eval()` BTW.
+1. Until I can get my ruby hash lookup working (help!) set your twitter handle in Dissident.initialize(). This is used to fiter out tweet and DM loopbacks.
 1. Start the bot: `ruby dissident.rb start`
 
 ```bash
-mkdir log
+mkdir logs
 nohup ruby dissident.rb start < /dev/null > logs/log.txt 2>&1 &
 ```
 
@@ -43,6 +44,7 @@ of cache data structure.
 
 ## Nice future features
 
+* making my own name configurable in the config file
 * Linking to images
 * keywords for every heckle, something like:
 
@@ -62,6 +64,6 @@ of cache data structure.
 * [Temboo Twitter Library](https://temboo.com/library/Library/Twitter/)
 * https://github.com/sferik/twitter
 * [Implementing Twitter Bot using Ruby](https://rudk.ws/2016/11/01/implementing-twitter-bot-using-ruby/)
-* + [Sample bot code](https://gist.github.com/rudkovskyi/3ae5baf4850ad70293814897252914b7)
+* [Sample bot code](https://gist.github.com/rudkovskyi/3ae5baf4850ad70293814897252914b7)
 
 

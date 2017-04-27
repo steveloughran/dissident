@@ -22,11 +22,11 @@ class Heckles
     File.open(filename).readlines.each do | line |
       line.strip!
       if not line.empty? and not line.start_with?("\#")
-        log.info "#{line.length}: #{line}"
+        log.debug "#{line.length}: #{line}"
         if line.length < 140
           @phrases << line
         else
-          log.info "**LINE too long**"
+          log.debug "**LINE too long**"
         end
       end     
     end
@@ -49,18 +49,24 @@ class Dissident
   # startup: inits the clients. It does not attempt to talk to Twitter though,
   # so invalid credentials are not picked up
   def initialize
+    @log = Logger.new(STDOUT)
+    @log.level = Logger::DEBUG
     @config = eval(File.open('conf/secrets.rb') {|f| f.read })
     @rest = Twitter::REST::Client.new(@config)
     @streaming = Twitter::Streaming::Client.new(@config)
-    @myname = "dissidentbot"
+    @log.debug "config is #{@config}"
+    @myname = @config['myname']
+    if @myname.nil? 
+      @log.warn "Configuration doesn't include :myname entry"
+      @myname = "@dissidentbot"
+    end
+    log "myname is #{@myname}"
     @started = Time.now.utc
     @start_local_time = @started.getlocal
     @sent_count = 0
     @dropped_count = 0
     @ignored_count = 0
     @hostname = shortname()
-    @log = Logger.new(STDOUT)
-    @log.level = Logger::INFO
   end
   
   # Log at info
@@ -116,7 +122,7 @@ class Dissident
     return username
   end
     
-  # reply if the generated message is valud  
+  # reply if the generated message is valid  
   def reply_to(status_id, status)
     if status.length > 140
       @log.warn "Reply too long at #{status.length}: #{status}"
@@ -136,7 +142,7 @@ class Dissident
       s = s + "started #{@start_local_time}; targets #{target_count};" + 
         " sent: #{@sent_count}; dropped #{@dropped_count}; ignored: #{@ignored_count}"
     when "targets"
-      s = s + targets.join(", ")
+      s = s + targets.join(", ")      
     else
       s = s + "usage: status | targets"
     end
@@ -177,7 +183,7 @@ class Dissident
   
   # Build the startup message
   def startup_message
-    return "Dissenting from #{target_count} accounts on host #{@hostname} at #{@start_local_time}"
+    return "#{myname} dissenting from #{target_count} accounts on #{@hostname} @ #{@start_local_time}"
   end
       
   # process a tweet or other event. 
@@ -215,7 +221,7 @@ class Dissident
 
   # main() entry point
   def main(args)
-    log "dissidentbot booting"
+    log "dissidentbot booting as #{@myname}"
     usage = "Usage: dissident start"
     if args.length == 0
       log usage
