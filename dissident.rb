@@ -55,18 +55,20 @@ class Dissident
     @rest = Twitter::REST::Client.new(@config)
     @streaming = Twitter::Streaming::Client.new(@config)
     @log.debug "config is #{@config}"
-    @myname = @config['myname']
-    if @myname.nil? 
+    @myname = @config[:myname]
+    if @myname.nil? or myname.length == 0
       @log.warn "Configuration doesn't include :myname entry"
       @myname = "@dissidentbot"
     end
-    log "myname is #{@myname}"
+    log "my name is \"#{@myname}\""
     @started = Time.now.utc
     @start_local_time = @started.getlocal
     @sent_count = 0
     @dropped_count = 0
     @ignored_count = 0
     @hostname = shortname()
+    @reply_probability = 80
+    @sleeptime = 10
   end
   
   # Log at info
@@ -85,6 +87,10 @@ class Dissident
     else
       status = nil
     end
+    
+    # probability filter
+    status = nil if not should_reply
+    
     if not status.nil? 
       hecklename = build_target(tweet.user.screen_name, text)
       heckles = Heckles.new()
@@ -92,6 +98,7 @@ class Dissident
       if heckles.empty? 
         @ignored_count += 1
       else
+        sleep_slightly
         reply_to(tweet.id, status)
       end
     else
@@ -115,13 +122,26 @@ class Dissident
   end
 
   
-  # there's a bug here, if you look hard
+  # there's a bug here, if you look hard, but it doesn't matter until
+  # someone creates the account @dissidentbot2
   def build_target(username, text)
     username = username.downcase
     username = "self" if not text.index("@#{@myname}").nil?
     return username
   end
-    
+  
+  # should the bot reply at all?  
+  def should_reply()
+    return rand(100) < @reply_probability
+  end
+  
+  # add some jitter
+  def sleep_slightly()
+    sleeptime = random @sleeptime
+    log "sleeping for #{sleeptime}s before posting"
+    sleep sleeptime
+  end
+  
   # reply if the generated message is valid  
   def reply_to(status_id, status)
     if status.length > 140
@@ -134,6 +154,7 @@ class Dissident
     end
   end
   
+  # process the command and send a message back to the caller
   def build_direct_message(command)
     command = command.downcase.strip
     s = "#{@hostname}: "
@@ -183,7 +204,7 @@ class Dissident
   
   # Build the startup message
   def startup_message
-    return "#{myname} dissenting from #{target_count} accounts on #{@hostname} @ #{@start_local_time}"
+    return "#{@myname} dissenting from #{target_count} accounts on #{@hostname} @ #{@start_local_time}"
   end
       
   # process a tweet or other event. 
@@ -221,7 +242,7 @@ class Dissident
 
   # main() entry point
   def main(args)
-    log "dissidentbot booting as #{@myname}"
+    log "dissident booting as @#{@myname}"
     usage = "Usage: dissident start"
     if args.length == 0
       log usage
