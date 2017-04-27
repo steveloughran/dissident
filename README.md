@@ -19,8 +19,12 @@ handle that
 1. Ask for Read, Write and Direct Message permissions, then generate the consumer and access tokens and secrets.
 1. Copy `conf/example-secrets.rb` to `conf/secrets.rb`. That is marked as gitignored, so doesn't get checked in unles you try very hard.
 1. Configure `secrets.rb` with your secrets. That file is loaded via `eval()` BTW.
-1. Start the bot: `ruby dissident.rb`
+1. Start the bot: `ruby dissident.rb start`
 
+```bash
+mkdir log
+nohup ruby dissident.rb start < /dev/null > logs/log.txt 2>&1 &
+```
 
 ### How to heckle
 
@@ -36,6 +40,7 @@ You do not need to restart the bot to add/remove users, or to change the message
 for a user, and their message file read, *for every tweet*. It's easier to do this than implement some kind
 of cache data structure.
 
+
 ## Nice future features
 
 * Linking to images
@@ -50,6 +55,7 @@ of cache data structure.
 
 * The initial bot code is derived from an example by `@rrubyist`.
 * Everyone used to help debug this code by acting as test subjects is appreciated for their contribution. That includes the `@Conservatives` account.
+* Sorry to anyone who accidentally got tweeted during the development of this
 
 ## References
 

@@ -49,18 +49,21 @@ class Dissident
   # startup: inits the clients. It does not attempt to talk to Twitter though,
   # so invalid credentials are not picked up
   def initialize
-    config = eval(File.open('conf/secrets.rb') {|f| f.read })
-    @rest = Twitter::REST::Client.new(config)
-    @streaming = Twitter::Streaming::Client.new(config)
+    @config = eval(File.open('conf/secrets.rb') {|f| f.read })
+    @rest = Twitter::REST::Client.new(@config)
+    @streaming = Twitter::Streaming::Client.new(@config)
     @myname = "dissidentbot"
     @started = Time.now.utc
     @start_local_time = @started.getlocal
     @sent_count = 0
+    @dropped_count = 0
+    @ignored_count = 0
     @hostname = shortname()
     @log = Logger.new(STDOUT)
     @log.level = Logger::INFO
   end
   
+  # Log at info
   def log(message)
     @log.info(message)
   end
@@ -71,15 +74,40 @@ class Dissident
     sender = tweet.user.screen_name.downcase
     text = tweet.text    
     log "incoming tweet: #{tweet.user.screen_name}: #{text} in reply to \"#{tweet.in_reply_to_user_id}\" "
-    return unless tweet.in_reply_to_status_id.is_a?(Twitter::NullObject)
-    return if sender.eql?@myname
-    hecklename = build_target(tweet.user.screen_name, text)
-    heckles = Heckles.new()
-    heckles.init(hecklename)
-    return if heckles.empty? 
-    status = "@#{sender} #{heckles.heckle}"
-    reply_to(tweet.id, status)
+    if tweet.in_reply_to_status_id.is_a?(Twitter::NullObject)
+      status = build_reply(sender, text)
+    else
+      status = nil
+    end
+    if not status.nil? 
+      hecklename = build_target(tweet.user.screen_name, text)
+      heckles = Heckles.new()
+      heckles.init(hecklename)
+      if heckles.empty? 
+        @ignored_count += 1
+      else
+        reply_to(tweet.id, status)
+      end
+    else
+      @ignored_count += 1
+    end
   end
+
+  # Generate a reply for the given user, if they are targeted and it is not a reply
+  # the latter keeps the noise down, and avoids loops.
+  # (snder: String, text: String) -> String or nul
+  def build_reply(sender, text)
+    if not sender.eql?@myname
+      hecklename = build_target(sender, text)
+      heckles = Heckles.new()
+      heckles.init(hecklename)
+      if not heckles.empty? 
+        return "@#{sender} #{heckles.heckle}"
+      end
+    end
+    return nil
+  end
+
   
   # there's a bug here, if you look hard
   def build_target(username, text)
@@ -88,22 +116,25 @@ class Dissident
     return username
   end
     
+  # reply if the generated message is valud  
   def reply_to(status_id, status)
     if status.length > 140
       @log.warn "Reply too long at #{status.length}: #{status}"
+      @dropped_count += 1
     else
       log "tweeting #{status}"
-      @sent_count = @sent_count + 1
+      @sent_count += 1
       @rest.update(status, in_reply_to_status_id: status_id)      
     end
   end
   
   def build_direct_message(command)
-    command.downcase.strip!
+    command = command.downcase.strip
     s = "#{@hostname}: "
     case command
     when "status"
-      s = s + "started #{@start_local_time}; targets #{target_count}; sent: #{@sent_count}"
+      s = s + "started #{@start_local_time}; targets #{target_count};" + 
+        " sent: #{@sent_count}; dropped #{@dropped_count}; ignored: #{@ignored_count}"
     when "targets"
       s = s + targets.join(", ")
     else
