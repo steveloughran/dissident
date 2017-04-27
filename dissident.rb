@@ -58,7 +58,7 @@ class Dissident
     @myname = @config[:myname]
     if @myname.nil? or @myname.length == 0
       @log.warn "Configuration doesn't include :myname entry"
-      @myname = "@dissidentbot"
+      @myname = "dissidentbot"
     end
     log "my name is \"#{@myname}\""
     @started = Time.now.utc
@@ -137,7 +137,7 @@ class Dissident
   
   # add some jitter
   def sleep_slightly()
-    sleeptime = rand @sleeptime
+    sleeptime = 10 + rand @sleeptime
     log "sleeping for #{sleeptime}s before posting"
     sleep sleeptime
   end
@@ -178,6 +178,7 @@ class Dissident
     log "Direct message from #{user.screen_name}: #{event.text}"
     response = build_direct_message(event.text)
     log "Response: #{response}"
+    sleep_slightly()
     @rest.create_direct_message(user, response)
   end
 
