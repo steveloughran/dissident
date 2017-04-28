@@ -31,15 +31,15 @@ class Heckles
       end     
     end
     log.info "Found #{@phrases.length} entries"
-    return true
+    true
   end
   
   def heckle
-    return @phrases.sample
+    @phrases.sample
   end
   
   def empty?
-    return @phrases.length == 0
+    @phrases.length == 0
   end
 end
 
@@ -79,7 +79,7 @@ class Dissident
   
   def int_option(opt, defval)
     r = @config[opt]
-    return r.nil? ? defval : r
+    r.nil? ? defval : r
   end
   
   # Log at info
@@ -99,17 +99,14 @@ class Dissident
       status = nil
     end
     
-    # probability filter
-    status = nil if not should_reply
-    
-    if not status.nil? 
+    if not status.nil? and should_reply
       hecklename = build_target(tweet.user.screen_name, text)
       heckles = Heckles.new()
       heckles.init(hecklename)
       if heckles.empty? 
         @ignored_count += 1
       else
-        sleep_slightly
+        sleep_slightly if not is_notification_message(text)
         reply_to(tweet.id, status)
       end
     else
@@ -129,21 +126,25 @@ class Dissident
         return "@#{sender} #{heckles.heckle}"
       end
     end
-    return nil
+    nil
   end
 
+
+  # is this a notification message?
+  def is_notification_message(text)
+    not text.index("@#{@myname}").nil?
+  end
+    
   
   # there's a bug here, if you look hard, but it doesn't matter until
   # someone creates the account @dissidentbot2
   def build_target(username, text)
-    username = username.downcase
-    username = "self" if not text.index("@#{@myname}").nil?
-    return username
+    is_notification_message(text) ? "self" : username.downcase
   end
   
   # should the bot reply at all?  
   def should_reply()
-    return rand(100) <= @reply_probability
+    rand(100) <= @reply_probability
   end
   
   # add some jitter
@@ -184,7 +185,7 @@ class Dissident
     else
       s = s + "usage: status | targets | reload | exit "
     end
-    return s
+    s
   end
   
   # incoming direct message
@@ -195,23 +196,22 @@ class Dissident
     log "Direct message from #{user.screen_name}: #{event.text}"
     response = build_direct_message(event.text)
     log "Response: #{response}"
-#    sleep_slightly()
     @rest.create_direct_message(user, response)
   end
 
   # get the shortname of this host for reporting
   def shortname
-    return Socket.gethostname.split(".")[0]
+    Socket.gethostname.split(".")[0]
   end
   
   # the list of targets
   def targets
-    return Dir["data/*.txt"]
+    Dir["data/*.txt"]
   end
   
   # get a count of targets
   def target_count
-    return targets().length
+    targets().length
   end
     
   # Say anything on twitter
@@ -222,7 +222,7 @@ class Dissident
   
   # Build the startup message
   def startup_message
-    return "#{@myname} dissenting from #{target_count} accounts on #{@hostname} @ #{@start_local_time}"
+    "#{@myname} dissenting from #{target_count} accounts on #{@hostname} @ #{@start_local_time}"
   end
       
   # process a tweet or other event. 
