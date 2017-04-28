@@ -1,6 +1,6 @@
 # Dissident
 
-Dissident: ruby based twitter dissident bot
+Dissident: Twitter dissident bot implemented in Ruby
 
 This is something designed to listen to a Twitter account and heckle. If enough people run this and set it
 to heckle from their accounts, we can have a nice set of dissenters out there ready to respond fast to any post by the party members.
@@ -29,7 +29,9 @@ There's a gemfile set up for ruby dependencies; `bundle install` will handle tha
 1. Copy `conf/example-secrets.rb` to `conf/secrets.rb`. That is marked as gitignored, so doesn't get checked in unles you try very hard.
 1. Configure `secrets.rb` with your secrets. That file is loaded via `eval()` BTW.
 1. Add your user/bot name to the `:myname` entry in `conf/secrets.rb`
-1. Start the bot: `ruby dissident.rb start`
+1. Start the bot:
+
+        ruby dissident.rb start
 
 ```bash
 mkdir logs
@@ -50,17 +52,61 @@ You do not need to restart the bot to add/remove users, or to change the message
 for a user, and their message file read, *for every tweet*. It's easier to do this than implement some kind
 of cache data structure.
 
+#### Configuration
+
+The file `conf/secrets.rb` must contain the configuration data. The 
+
+```ruby
+ # Example secrets
+ # Fill in the core details from Twitter
+ # the myname value is used in the bot itself to stop loopbacks and to recognise conversational openers
+
+config = {
+  # name used to detect loops and not reply to self
+  myname: "dissidentbot",
+  
+  # †witter config options
+  consumer_key:   "",
+  consumer_secret: "",
+  access_token:  "",
+  access_token_secret: "",
+  
+  # probability of responding as a percentage: 100 = always, 0 = never
+  reply_probability: 75,
+  # sleeptime range, in seconds; 10s is always added to this
+  sleeptime: 20
+}
+
+```
+
 #### Replying to direct messages: the admin API
 
-Anyone who can DM the bot can send admin messages, of which there are currently two
+Anyone who can DM the bot can send admin commands. To use these: have the bot follow you, then DM it.
 
-`status`: send a status update, such as
+`usage`
+
+    usage: status | targets | reload | exit 
+
+`status` or `?`
+
+send a status update, such as
 
     piball: started 2017-04-27 17:47:15 +0100; targets 7; sent: 0; dropped 0; ignored: 1
 
-`targets` lists the target files; it could be improved
+`targets`
 
-To use these: have the bot follow you, then DM it.
+lists the target files; it could be improved
+
+`reload`
+
+Reloads from `secrets.rb` configuration options. Not the twitter binding data, but everything else.
+
+dogbert: reply_probability=75; sleeptime=20
+
+`exit`
+
+Have the bot shut down
+
 
 #### Replying to mentions
 
@@ -119,7 +165,7 @@ Contributions welcome as pull requests.
 
 * The initial bot code is derived from an example by `@rrubyist`.
 * Everyone used to help debug this code by acting as test subjects is appreciated for their contribution. That includes the `@Conservatives` account.
-* Sorry to anyone who accidentally got tweeted during the development of this
+* Sorry to anyone who accidentally got tweeted during the development of this.
 
 ## References
 

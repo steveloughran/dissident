@@ -51,15 +51,9 @@ class Dissident
   def initialize
     @log = Logger.new(STDOUT)
     @log.level = Logger::DEBUG
-    @config = eval(File.open('conf/secrets.rb') {|f| f.read })
+    reload
     @rest = Twitter::REST::Client.new(@config)
     @streaming = Twitter::Streaming::Client.new(@config)
-    @log.debug "config is #{@config}"
-    @myname = @config[:myname]
-    if @myname.nil? or @myname.length == 0
-      @log.warn "Configuration doesn't include :myname entry"
-      @myname = "dissidentbot"
-    end
     log "my name is \"#{@myname}\""
     @started = Time.now.utc
     @start_local_time = @started.getlocal
@@ -67,8 +61,25 @@ class Dissident
     @dropped_count = 0
     @ignored_count = 0
     @hostname = shortname()
-    @reply_probability = 90
-    @sleeptime = 10
+    @shouldExit = false
+  end
+  
+  def reload
+    @config = eval(File.open('conf/secrets.rb') {|f| f.read })
+    @log.debug "config is #{@config}"
+    @myname = @config[:myname]
+    if @myname.nil? or @myname.length == 0
+      @log.warn "Configuration doesn't include :myname entry"
+      @myname = "dissidentbot"
+    end
+    @reply_probability = int_option(:reply_probability, 75)
+    @sleeptime = int_option(:sleeptime, 15)
+  end
+  
+  
+  def int_option(opt, defval)
+    r = @config[opt]
+    return r.nil? ? defval : r
   end
   
   # Log at info
@@ -164,8 +175,14 @@ class Dissident
         " sent: #{@sent_count}; dropped #{@dropped_count}; ignored: #{@ignored_count}"
     when "targets"
       s = s + targets.join(", ")      
+    when "exit"
+      s = s + "Exiting"
+      @shouldExit = true
+    when "reload"
+      reload
+      s = s + "reply_probability=#{@reply_probability}; sleeptime=#{@sleeptime}"
     else
-      s = s + "usage: status | targets"
+      s = s + "usage: status | targets | reload | exit "
     end
     return s
   end
@@ -178,7 +195,7 @@ class Dissident
     log "Direct message from #{user.screen_name}: #{event.text}"
     response = build_direct_message(event.text)
     log "Response: #{response}"
-    sleep_slightly()
+#    sleep_slightly()
     @rest.create_direct_message(user, response)
   end
 
@@ -230,6 +247,7 @@ class Dissident
     begin
       @streaming.user do |event|
          process(event)
+         break if @shouldExit
       end
     rescue StandardError => err
       # dubious about this
