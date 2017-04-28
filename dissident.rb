@@ -159,7 +159,7 @@ class Dissident
     command = command.downcase.strip
     s = "#{@hostname}: "
     case command
-    when "status"
+    when "status", "?"
       s = s + "started #{@start_local_time}; targets #{target_count};" + 
         " sent: #{@sent_count}; dropped #{@dropped_count}; ignored: #{@ignored_count}"
     when "targets"
