@@ -33,10 +33,18 @@ There's a gemfile set up for ruby dependencies; `bundle install` will handle tha
 
         ruby dissident.rb start
 
+
+**Running as a daemon**
+
+This doesn't work right, somehow the logs are getting lost and the daemon stops. Help needed!
+
 ```bash
 mkdir logs
 nohup ruby dissident.rb start < /dev/null > logs/log.txt 2>&1 &
 ```
+
+The plan here is actually to have "`dissident start`" run to `stdout`, but `nohup dissident daemon&` to set the logger to log to a file in `logs`; that way: the logging should at least be collected.
+
 
 ### How to heckle
 
@@ -101,7 +109,11 @@ lists the target files; it could be improved
 
 Reloads from `secrets.rb` configuration options. Not the twitter binding data, but everything else.
 
-dogbert: reply_probability=75; sleeptime=20
+    dogbert: reply_probability=75; sleeptime=20
+
+`update` or `pull`
+
+triggers a `git pull` to update the state from git. This doesn't update the software, but it will mean that all updated entries in `data/` which you have pushed up to your git repo will then be pulled down. It lets you update your bot's heckles without having to `ssh` in to the box.
 
 `exit`
 
