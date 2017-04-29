@@ -87,7 +87,7 @@ config = {
 
 ```
 
-#### Replying to direct messages: the admin API
+#### The Admin Interface
 
 Anyone who can DM the bot can send admin commands. To use these: have the bot follow you, then DM it.
 
@@ -118,6 +118,9 @@ triggers a `git pull` to update the state from git. This doesn't update the soft
 `exit`
 
 Have the bot shut down
+
+This means that anyone whom your bot is hecking can shut it down. If that becomes an issue, a new config option could be added to list the admin user. For now though it relies on Boris Johnson being commuter illiterate as well as an utter twat.
+
 
 
 #### Replying to mentions
