@@ -167,7 +167,7 @@ class Dissident
   end
   
   # process the command and send a message back to the caller
-  def build_direct_message(command)
+  def process_direct_message(command)
     command = command.downcase.strip
     s = "#{@hostname}: "
     case command
@@ -182,8 +182,10 @@ class Dissident
     when "reload"
       reload
       s = s + "reply_probability=#{@reply_probability}; sleeptime=#{@sleeptime}"
+    when "update", "pull"
+      s +=  update
     else
-      s = s + "usage: status | targets | reload | exit "
+      s = s + "usage: status | ? | targets | reload | update | exit "
     end
     s
   end
@@ -194,7 +196,7 @@ class Dissident
     username = user.screen_name.downcase
     return if username.eql?@myname
     log "Direct message from #{user.screen_name}: #{event.text}"
-    response = build_direct_message(event.text)
+    response = process_direct_message(event.text)
     log "Response: #{response}"
     @rest.create_direct_message(user, response)
   end
@@ -212,6 +214,17 @@ class Dissident
   # get a count of targets
   def target_count
     targets().length
+  end
+  
+  # do a git update; any failure -> Log and continue
+  def update
+    begin
+      %x{git pull}
+    rescue StandardError => err
+      # dubious about this
+      @log.warn(err)
+      "failed"
+    end
   end
     
   # Say anything on twitter
