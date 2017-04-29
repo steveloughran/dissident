@@ -44,7 +44,7 @@ class Heckles
 end
 
 # This is the class which does all the work
-class Dissident
+class Dissident  
 
   # startup: inits the clients. It does not attempt to talk to Twitter though,
   # so invalid credentials are not picked up
@@ -62,6 +62,7 @@ class Dissident
     @ignored_count = 0
     @hostname = shortname()
     @shouldExit = false
+    @initialized = true
   end
   
   def reload
@@ -74,12 +75,13 @@ class Dissident
     end
     @reply_probability = int_option(:reply_probability, 75)
     @sleeptime = int_option(:sleeptime, 15)
+    @minsleeptime = int_option(:minsleeptime, 30)
   end
   
   
   def int_option(opt, defval)
     r = @config[opt]
-    r.nil? ? defval : r
+    (r.nil? or r < 0) ? defval : r
   end
   
   # Log at info
@@ -149,7 +151,7 @@ class Dissident
   
   # add some jitter
   def sleep_slightly()
-    sleeptime = 10 + rand(@sleeptime)
+    sleeptime = @minsleeptime + rand(@sleeptime)
     log "sleeping for #{sleeptime}s before posting"
     sleep sleeptime
   end
@@ -160,7 +162,7 @@ class Dissident
       @log.warn "Reply too long at #{status.length}: #{status}"
       @dropped_count += 1
     else
-      log "tweeting #{status}"
+      log "tweeting #{status} to #{status_id}"
       @sent_count += 1
       @rest.update(status, in_reply_to_status_id: status_id)      
     end
@@ -254,6 +256,10 @@ class Dissident
 
   # Listen to streaming events and process them
   def listen
+    if @initialized.nil?
+      @log.error("Not initialized")
+      return
+    end
     log "starting to listen"
     lives = 10
     say(startup_message())
@@ -274,6 +280,10 @@ class Dissident
 
   # main() entry point
   def main(args)
+    if @initialized.nil?
+      @log.error("Not initialized")
+      return
+    end
     log "dissident booting as @#{@myname}"
     usage = "Usage: dissident start"
     if args.length == 0
