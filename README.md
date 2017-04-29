@@ -17,9 +17,9 @@ And it's lightweight enough for this all to work on a Raspberry Pi, which is whe
 ### Software
 
 
-Install Ruby 2.4 on your system. This takes a while to build for a Pi, but can be done.
+Install Ruby 2.4 on your system. This takes a while to [build for a Pi](https://gist.github.com/blacktm/8302741), but can be done, at least on the second attempt.
 
-There's a gemfile set up for ruby dependencies; `bundle install` will handle that.
+There's a gemfile set up for Ruby dependencies; `bundle install` will handle that.
 
 
 ### Getting up and running
