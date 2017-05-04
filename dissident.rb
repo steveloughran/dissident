@@ -73,12 +73,13 @@ class Dissident
       @log.warn "Configuration doesn't include :myname entry"
       @myname = "dissidentbot"
     end
+    @myname = @myname.downcase
     @reply_probability = int_option(:reply_probability, 75)
     @sleeptime = int_option(:sleeptime, 15)
     @minsleeptime = int_option(:minsleeptime, 30)
   end
   
-  
+  # load an integer option; if the default value is missing or negative, use the default
   def int_option(opt, defval)
     r = @config[opt]
     (r.nil? or r < 0) ? defval : r
@@ -96,12 +97,12 @@ class Dissident
     text = tweet.text    
     log "incoming tweet: #{tweet.user.screen_name}: #{text} in reply to \"#{tweet.in_reply_to_user_id}\" "
     if tweet.in_reply_to_status_id.is_a?(Twitter::NullObject)
-      status = build_reply(sender, text)
+      response = build_reply(sender, text)
     else
-      status = nil
+      response = nil
     end
     
-    if not status.nil? and should_reply
+    if not response.nil? and should_reply
       hecklename = build_target(tweet.user.screen_name, text)
       heckles = Heckles.new()
       heckles.init(hecklename)
@@ -109,7 +110,7 @@ class Dissident
         @ignored_count += 1
       else
         sleep_slightly if not is_notification_message(text)
-        reply_to(tweet.id, status)
+        reply_to(tweet.id, response)
       end
     else
       @ignored_count += 1
