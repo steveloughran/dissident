@@ -29,3 +29,4 @@ Even to a small ruby script your tweets are uninteresting
 Today, the amount of carbon dioxide in the atmosphere is higher than at any time in the last 650,000 years
 Don't ask me, I'm just a Raspberry Pi programmed to heckle politicians
 You are arguing with a small piece of software. And losing
+I'd like to disagree with you, but I'm not self aware
