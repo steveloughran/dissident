@@ -90,28 +90,47 @@ class Dissident
     @log.info(message)
   end
 
+  # Log at warn
+  def warn(message)
+    @log.warn(message)
+  end
+
+  # Log at error
+  def error(message)
+    @log.error(message)
+  end
+
+  # given a tweet, identify its sender
+  def tweet_sender(tweet)
+     tweet.user.screen_name.downcase
+  end
+
+  def is_response(text) 
+    text.include?"RT "
+  end
+
   # Generate a reply for the given user, if they are targeted and it is not a reply
   # the latter keeps the noise down, and avoids loops.
   def reply(tweet)
-    sender = tweet.user.screen_name.downcase
+    sender = tweet_sender(tweet)
     text = tweet.text    
-    log "incoming tweet: #{tweet.user.screen_name}: #{text} in reply to \"#{tweet.in_reply_to_user_id}\" "
-    if tweet.in_reply_to_status_id.is_a?(Twitter::NullObject)
-      response = build_reply(sender, text)
+    log "incoming tweet: #{sender}: #{text} in reply to \"#{tweet.in_reply_to_user_id}\" "
+    # build a reply if this is not a reply of someone else's
+    response = nil
+    reply_id = tweet.in_reply_to_status_id
+    if reply_id.is_a?(Twitter::NullObject)
+      if is_response(text)
+        log "Message is Retweet"
+      else
+        response = build_reply(sender, text)
+      end
     else
-      response = nil
+      log "tweet is in reply to #{reply_id}; ignoring"
     end
     
     if not response.nil? and should_reply
-      hecklename = build_target(tweet.user.screen_name, text)
-      heckles = Heckles.new()
-      heckles.init(hecklename)
-      if heckles.empty? 
-        @ignored_count += 1
-      else
-        sleep_slightly if not is_notification_message(text)
-        reply_to(tweet.id, response)
-      end
+      sleep_slightly if not is_notification_message(text)
+      reply_to(tweet, response)
     else
       @ignored_count += 1
     end
@@ -128,16 +147,16 @@ class Dissident
       if not heckles.empty? 
         return "@#{sender} #{heckles.heckle}"
       end
+    else
+      log "sender is me; ignoring"
     end
     nil
   end
-
 
   # is this a notification message?
   def is_notification_message(text)
     not text.index("@#{@myname}").nil?
   end
-    
   
   # there's a bug here, if you look hard, but it doesn't matter until
   # someone creates the account @dissidentbot2
@@ -150,22 +169,29 @@ class Dissident
     rand(100) <= @reply_probability
   end
   
-  # add some jitter
+  # add some jitter
   def sleep_slightly()
     sleeptime = @minsleeptime + rand(@sleeptime)
-    log "sleeping for #{sleeptime}s before posting"
+    log "sleeping for #{sleeptime}s"
     sleep sleeptime
   end
   
   # reply if the generated message is valid  
-  def reply_to(status_id, status)
-    if status.length > 140
-      @log.warn "Reply too long at #{status.length}: #{status}"
-      @dropped_count += 1
+  def reply_to(tweet, status)
+    status_id = tweet.id
+    sender = tweet_sender(tweet)
+    if not sender.eql?@myname
+      if status.length > 140
+        warn "Reply too long at #{status.length}: #{status}"
+        @dropped_count += 1
+      else
+        log "tweeting #{status} to #{status_id}"
+        @sent_count += 1
+        @rest.update(status, in_reply_to_status_id: status_id)      
+      end
     else
-      log "tweeting #{status} to #{status_id}"
-      @sent_count += 1
-      @rest.update(status, in_reply_to_status_id: status_id)      
+      log "Dropping loopback message"
+      @dropped_count += 1
     end
   end
   
@@ -225,7 +251,7 @@ class Dissident
       %x{git pull}
     rescue StandardError => err
       # dubious about this
-      @log.warn(err)
+      warn(err)
       "failed"
     end
   end
@@ -249,7 +275,7 @@ class Dissident
     when Twitter::DirectMessage
       on_direct_message(event)
     when Twitter::Streaming::StallWarning
-      @log.warn "Falling behind!"
+      warn "Falling behind!"
     else
       log "Other event #{event}"
     end
@@ -270,10 +296,17 @@ class Dissident
          break if @shouldExit
       end
     rescue StandardError => err
-      # dubious about this
-      @log.warn(err)
+      # something went wrong
+      warn(err)
+      # sleep before a retry to handle throttling/transient
       lives = lives - 1
-      retry if lives > 0
+      if lives > 0
+        log "Remaining lives #{lives}"
+        sleep_slightly
+        retry 
+      else
+        error "Too many failures, shutting down"
+      end
     ensure
       say("#{@hostname} shutting down")
     end
@@ -285,7 +318,7 @@ class Dissident
       @log.error("Not initialized")
       return
     end
-    log "dissident booting as @#{@myname}"
+    log "dissident booting as '#{@myname}'"
     usage = "Usage: dissident start"
     if args.length == 0
       log usage
@@ -294,10 +327,14 @@ class Dissident
       if (command == "start") 
         listen
       else
-        log "Unknown action #{command}"
+        warn "Unknown action #{command}"
         log usage
       end
     end
+  end
+  
+  def start()
+    main(["start"])
   end
   
 end
