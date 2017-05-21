@@ -114,13 +114,13 @@ class Dissident
   def reply(tweet)
     sender = tweet_sender(tweet)
     text = tweet.text    
-    log "incoming tweet: #{sender}: #{text} in reply to \"#{tweet.in_reply_to_user_id}\" "
+    log "incoming tweet: #{sender}: \"#{text}\" in reply to \"#{tweet.in_reply_to_user_id}\" "
     # build a reply if this is not a reply of someone else's
     response = nil
     reply_id = tweet.in_reply_to_status_id
     if reply_id.is_a?(Twitter::NullObject)
       if is_response(text)
-        log "Message is Retweet"
+        log "Message is Retweet; ignoring"
       else
         response = build_reply(sender, text)
       end
