@@ -19,14 +19,21 @@ class Heckles
       return false
     end
     log.info "Reading #{filename}"
+    linenumber = 0
     File.open(filename).readlines.each do | line |
+      linenumber = linenumber + 1
       line.strip!
+      if linenumber == 1 and line.eq?("#DISABLED")
+        log.info "File is disabled"
+        return false
+      end
       if not line.empty? and not line.start_with?("\#")
         log.debug "#{line.length}: #{line}"
         if line.length < 140
           @phrases << line
         else
           log.debug "**LINE too long**"
+          @phrases << line
         end
       end     
     end
@@ -63,6 +70,8 @@ class Dissident
     @hostname = shortname()
     @shouldExit = false
     @initialized = true
+    @online = true
+    @lives = 10
   end
   
   def reload
@@ -115,6 +124,11 @@ class Dissident
     sender = tweet_sender(tweet)
     text = tweet.text    
     log "incoming tweet: #{sender}: \"#{text}\" in reply to \"#{tweet.in_reply_to_user_id}\" "
+
+    if not @online
+      # dont reply if the app is offline; on the DM API is active
+      return
+    end
     # build a reply if this is not a reply of someone else's
     response = nil
     reply_id = tweet.in_reply_to_status_id
@@ -202,7 +216,9 @@ class Dissident
     case command
     when "status", "?"
       s = s + "started #{@start_local_time}; targets #{target_count};" + 
-        " sent: #{@sent_count}; dropped #{@dropped_count}; ignored: #{@ignored_count}"
+        " sent: #{@sent_count}; dropped #{@dropped_count}; ignored: #{@ignored_count}" +
+        "; online=#{online}"
+        
     when "targets"
       s = s + targets.join(", ")      
     when "exit"
@@ -213,8 +229,14 @@ class Dissident
       s = s + "reply_probability=#{@reply_probability}; sleeptime=#{@sleeptime}"
     when "update", "pull"
       s +=  update
+    when "offline"
+      s= "Going offline, current online=#{online}"
+      @online = false
+    when "online"
+      s= "Going online, current online=#{online}"
+      @online = true
     else
-      s = s + "usage: status | ? | targets | reload | update | exit "
+      s = s + "usage: status | ? | targets | reload | update | exit | offline | online "
     end
     s
   end
@@ -288,7 +310,6 @@ class Dissident
       return
     end
     log "starting to listen"
-    lives = 10
     say(startup_message())
     begin
       @streaming.user do |event|
@@ -299,9 +320,9 @@ class Dissident
       # something went wrong
       warn(err)
       # sleep before a retry to handle throttling/transient
-      lives = lives - 1
-      if lives > 0
-        log "Remaining lives #{lives}"
+      @lives = @lives - 1
+      if @lives > 0
+        log "Remaining lives #{@lives}"
         sleep_slightly
         retry 
       else
