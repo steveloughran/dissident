@@ -306,17 +306,6 @@ class Dissident
     end
   end
     
-  # Say anything on twitter
-  def say(message)
-    log message
-    @rest.update(message)
-  end
-  
-  # Build the startup message
-  def startup_message
-    "#{@myname} dissenting from #{target_count} accounts on #{@hostname} @ #{@start_local_time}"
-  end
-      
   # process a tweet or other event. 
   def process(event) 
     case event
@@ -329,6 +318,17 @@ class Dissident
     else
       log "Other event #{event}"
     end
+  end
+    
+  # Say anything on twitter
+  def say(message)
+    log message
+    @rest.update(message)
+  end
+  
+  # Build the startup message
+  def startup_message
+    "#{@myname} dissenting from #{target_count} accounts on #{@hostname} @ #{@start_local_time}"
   end
 
   # Listen to streaming events and process them
