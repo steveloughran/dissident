@@ -9,8 +9,12 @@ require 'logger'
 # here are the heckles for a user
 # designed so that they can be isolated/persisted if need be
 class Heckles
+
+  # Initialise
+  # return true iff there is data
   def init(username)
     @phrases = Array.new
+    @disabled = false
     log = Logger.new(STDOUT)
     log.level = Logger::DEBUG
     filename = "data/#{username}.txt".downcase
@@ -19,12 +23,10 @@ class Heckles
       return false
     end
     log.info "Reading #{filename}"
-    linenumber = 0
     File.open(filename).readlines.each do | line |
-      linenumber = linenumber + 1
       line.strip!
-      if linenumber == 1 and line.eq?("#DISABLED")
-        log.info "File is disabled"
+      if line.start_with?("\#DISABLED")
+        log.info "This account is disabled"
         return false
       end
       if not line.empty? and not line.start_with?("\#")
@@ -33,7 +35,6 @@ class Heckles
           @phrases << line
         else
           log.debug "**LINE too long**"
-          @phrases << line
         end
       end     
     end
@@ -71,7 +72,6 @@ class Dissident
     @shouldExit = false
     @initialized = true
     @online = true
-    @lives = 10
   end
   
   def reload
@@ -84,6 +84,7 @@ class Dissident
     end
     @myname = @myname.downcase
     @reply_probability = int_option(:reply_probability, 75)
+    @self_reply_probability = int_option(:self_reply_probability, @reply_probability)
     @sleeptime = int_option(:sleeptime, 15)
     @minsleeptime = int_option(:minsleeptime, 30)
   end
@@ -124,11 +125,14 @@ class Dissident
     sender = tweet_sender(tweet)
     text = tweet.text    
     log "incoming tweet: #{sender}: \"#{text}\" in reply to \"#{tweet.in_reply_to_user_id}\" "
-
+    
     if not @online
-      # dont reply if the app is offline; on the DM API is active
+      # we are offline; ignore the message
+      log "dissidentbot is offline: ignoring"
+      @ignored_count += 1
       return
     end
+    
     # build a reply if this is not a reply of someone else's
     response = nil
     reply_id = tweet.in_reply_to_status_id
@@ -142,17 +146,32 @@ class Dissident
       log "tweet is in reply to #{reply_id}; ignoring"
     end
     
-    if not response.nil? and should_reply
-      sleep_slightly if not is_notification_message(text)
-      reply_to(tweet, response)
+    isNotification = is_notification_message(text)
+    if not response.nil? 
+      if should_reply(isNotification)
+        # something to say and its not being dropped.
+        # sleep if its a heckle (and not a reply)
+        log "about to reply after a possible sleep"
+        sleep_slightly if not isNotification
+        # then issue the reply
+        reply_to(tweet, response)
+      else
+        # ignoring
+        log "Prepared message #{response} but chose not to reply"
+        @ignored_count += 1
+      end
     else
+      log "No response generated; ignoring"
+      # ignoring
       @ignored_count += 1
     end
   end
 
+  
+
   # Generate a reply for the given user, if they are targeted and it is not a reply
   # the latter keeps the noise down, and avoids loops.
-  # (snder: String, text: String) -> String or nul
+  # (sender: String, text: String) -> String or nul
   def build_reply(sender, text)
     if not sender.eql?@myname
       hecklename = build_target(sender, text)
@@ -178,9 +197,9 @@ class Dissident
     is_notification_message(text) ? "self" : username.downcase
   end
   
-  # should the bot reply at all?  
-  def should_reply()
-    rand(100) <= @reply_probability
+  # should the bot reply at all?
+  def should_reply(isNotification)
+    rand(100) <= (isNotification ? @self_reply_probability : @reply_probability)
   end
   
   # add some jitter
@@ -209,34 +228,43 @@ class Dissident
     end
   end
   
+  def status_report()
+    "started #{@start_local_time}; online=#{@online} targets #{target_count};" + 
+        " sent: #{@sent_count}; dropped #{@dropped_count}; ignored: #{@ignored_count}" +
+        " P(reply)=#{@reply_probability}; P(self_reply)=#{@self_reply_probability}"
+  end
+  
   # process the command and send a message back to the caller
   def process_direct_message(command)
     command = command.downcase.strip
+    log "DM command #{command}"
     s = "#{@hostname}: "
     case command
     when "status", "?"
-      s = s + "started #{@start_local_time}; targets #{target_count};" + 
-        " sent: #{@sent_count}; dropped #{@dropped_count}; ignored: #{@ignored_count}" +
-        "; online=#{online}"
-        
+      st = status_report
+      log st
+      s = s + st
     when "targets"
       s = s + targets.join(", ")      
     when "exit"
+      log "Exiting"
       s = s + "Exiting"
       @shouldExit = true
     when "reload"
       reload
-      s = s + "reply_probability=#{@reply_probability}; sleeptime=#{@sleeptime}"
+      s = s + status_report
     when "update", "pull"
       s +=  update
-    when "offline"
-      s= "Going offline, current online=#{online}"
-      @online = false
     when "online"
-      s= "Going online, current online=#{online}"
+      log "Going online"
       @online = true
+      s = s + status_report
+    when "offline"
+      log "Going offline"
+      @online = false
+      s = s + status_report
     else
-      s = s + "usage: status | ? | targets | reload | update | exit | offline | online "
+      s = s + "usage: status | ? | targets | reload | update | pull | online | offline | exit "
     end
     s
   end
@@ -310,6 +338,8 @@ class Dissident
       return
     end
     log "starting to listen"
+    log status_report
+    lives = 10
     say(startup_message())
     begin
       @streaming.user do |event|
@@ -320,9 +350,9 @@ class Dissident
       # something went wrong
       warn(err)
       # sleep before a retry to handle throttling/transient
-      @lives = @lives - 1
-      if @lives > 0
-        log "Remaining lives #{@lives}"
+      lives = lives - 1
+      if lives > 0
+        log "Remaining lives #{lives}"
         sleep_slightly
         retry 
       else

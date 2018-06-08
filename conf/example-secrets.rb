@@ -14,10 +14,14 @@ config = {
   # probability of responding as a percentage: 100 = always, 0 = never
   reply_probability: 75,
 
+  # Probability (0-100) of replying to a message referring to dissidentbot.
+  # Keep < 100 to avoid infinite loops
+  self_reply_probability: 90,
+
   # minimum sleep time, seconds
   # all heckles wait this time + the random time < :sleeptime
-  minsleeptime: 120,
+  minsleeptime: 20,
 
   # sleeptime range, in seconds, used to generate a random delay affter the minimum sleep time
-  sleeptime: 180
+  sleeptime: 10
 }

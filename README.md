@@ -19,6 +19,8 @@ And it's lightweight enough for this all to work on a Raspberry Pi, which is whe
 
 Install Ruby 2.4 on your system. This takes a while to [build for a Pi](https://gist.github.com/blacktm/8302741), but can be done, at least on the second attempt.
 
+For MacOs, use [rbenv](https://github.com/rbenv/rbenv) to get to a modern ruby version, then `gem install bundle`
+
 There's a gemfile set up for Ruby dependencies; `bundle install` will handle that.
 
 
@@ -46,7 +48,7 @@ nohup ruby dissident.rb start < /dev/null > logs/log.txt 2>&1 &
 The plan here is actually to have "`dissident start`" run to `stdout`, but `nohup dissident daemon&` to set the logger to log to a file in `logs`; that way: the logging should at least be collected.
 
 
-### How to heckle
+## How to heckle
 
 For every user you wish to heckle
 
@@ -60,7 +62,7 @@ You do not need to restart the bot to add/remove users, or to change the message
 for a user, and their message file read, *for every tweet*. It's easier to do this than implement some kind
 of cache data structure.
 
-#### Configuration
+### Configuration
 
 The file `conf/secrets.rb` must contain the configuration data. The 
 
@@ -87,9 +89,12 @@ config = {
 
 ```
 
-#### The Admin Interface
+### The Admin Interface
 
-Anyone who can DM the bot can send admin commands. To use these: have the bot follow you, then DM it.
+Anyone who can DM the bot can send admin commands. 
+
+
+To use these: have the bot follow you, then DM it.
 
 `usage`
 
@@ -121,30 +126,37 @@ Have the bot shut down
 
 This means that anyone whom your bot is hecking can shut it down. If that becomes an issue, a new config option could be added to list the admin user. For now though it relies on Boris Johnson being commuter illiterate as well as an utter twat.
 
+Future idea: allow the list of people who can control the bot to be restricted.
 
-
-#### Replying to mentions
+### Replying to mentions
 
 The bot will reply to any message with its handle it, picking a message from `data/self.txt`
 
 * Replies are ignored, only simple tweets. This stops loops
 * You need to configure the name of the bot in secrets.rb, in the field `:myname`.
 
-If you don't want the bot to reply, delete the `self.txt` file. Or comment out the values with a `#` at the start
-of each line.
+If you don't want the bot to reply, delete the `self.txt` file. Or comment out the values with a `#` at the start of each line.
 
 
-#### Debugging
+### Debugging
 
-Run `irb` then read in the file
+Run `irb --simple-prompt` then read in the file
 
-    source("./dissident.rb")
+```ruby
+source("./dissident.rb")
+```
 
 This instantiates and configures the bot instance, but doesn't start it running. You can refer to it in the variable `bot`
 
-    bot.say("hello, world")
-    bot.build_direct_message "status"
-    bot.build_reply("borisjohnson", "jolly good!")
+```ruby
+bot.say("hello, world")
+bot.build_direct_message "status"
+bot.build_reply("borisjohnson", "jolly good!")
+
+# Go live
+bot.start()
+```
+
 
 I've tried to split up the message parse/response generation logic from the actual IO, to help debug what's going on.
 
@@ -164,7 +176,9 @@ Abuse is an issue too: people will complain, you will have a warning, then your 
 
 ## Nice future features
 
-* Posting images
+No plans to sit down and do these but....
+
+* Posting images (issue: probably triggers spamwall)
 * Fixing the logging
 * Tests
 * Keywords for every heckle, something like:
@@ -180,7 +194,7 @@ Contributions welcome as pull requests.
 
 * The initial bot code is derived from an example by `@rrubyist`.
 * Everyone used to help debug this code by acting as test subjects is appreciated for their contribution. That includes the `@Conservatives` account.
-* Sorry to anyone who accidentally got tweeted during the development of this.
+* Sorry to anyone who accidentally got tweeted during the development of this. Especially `@self`.
 
 ## References
 
