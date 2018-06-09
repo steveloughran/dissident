@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # bot.sh
 # run as: source bot.sh
 echo "lauching dissidentbot"
