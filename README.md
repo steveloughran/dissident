@@ -64,7 +64,7 @@ of cache data structure.
 
 ### Configuration
 
-The file `conf/secrets.rb` must contain the configuration data. The 
+The file `conf/secrets.rb` must contain the configuration data. The access keys and secrets come from twitter: do not share.
 
 ```ruby
  # Example secrets
@@ -84,14 +84,18 @@ config = {
   # probability of responding as a percentage: 100 = always, 0 = never
   reply_probability: 75,
   # sleeptime range, in seconds; 10s is always added to this
-  sleeptime: 20
+  sleeptime: 20,
+  # Name of the administrator. If unset: anyone @dissidentbot follows can issue commands
+  admin: ""
 }
 
 ```
 
 ### The Admin Interface
 
-Anyone who can DM the bot can send admin commands. 
+The admin interface is the DM channel, if you can talk to it, and the bot trusts you, you can manage it. 
+
+The name of the user is that set in the `admin` config option; if unset/set to "", then anyone who can DM the bot can control it.
 
 
 To use these: have the bot follow you, then DM it.
@@ -122,11 +126,8 @@ triggers a `git pull` to update the state from git. This doesn't update the soft
 
 `exit`
 
-Have the bot shut down
+Have the bot shut down. If you are running a fleet of bots, this shuts them all down.
 
-This means that anyone whom your bot is hecking can shut it down. If that becomes an issue, a new config option could be added to list the admin user. For now though it relies on Boris Johnson being commuter illiterate as well as an utter twat.
-
-Future idea: allow the list of people who can control the bot to be restricted.
 
 ### Replying to mentions
 
