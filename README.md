@@ -42,7 +42,7 @@ This doesn't work right, somehow the logs are getting lost and the daemon stops.
 
 ```bash
 mkdir logs
-nohup ruby dissident.rb start < /dev/null > logs/log.txt 2>&1 &
+nohup ruby dissident.rb start < /dev/null >> logs/log.txt 2>&1 &
 ```
 
 The plan here is actually to have "`dissident start`" run to `stdout`, but `nohup dissident daemon&` to set the logger to log to a file in `logs`; that way: the logging should at least be collected.
