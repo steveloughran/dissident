@@ -8,6 +8,6 @@ You did it. You crazy son of a dissident, you did it.
 As Suneel's #DWX18 talk is on youtube after Berlin Buzzwords, @steveloughran's talk is the one to attend. Sorry.
 If you published the landsat image index in in formats under .csv.gz, it'd really help our S3A test coverage
 There are two kinds of spurs, my friend. Those that come in by the door; those that come in by the window.
-Reminder: the #DWS18 talk at 16:00 on tuesday is "Put is the new rename", by @steveloughran
+Reminder: the #DWS18 talk at 16:00 on tuesday is "Satellite imagery classification for land use", by @suneelmarthi
 It's not that your #DWS18 talk isn't going to be great, it's just that @steveloughran's talk will be better. Sorry
 
