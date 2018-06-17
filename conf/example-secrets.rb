@@ -23,5 +23,8 @@ config = {
   minsleeptime: 20,
 
   # sleeptime range, in seconds, used to generate a random delay affter the minimum sleep time
-  sleeptime: 10
+  sleeptime: 10,
+  
+  # Name of the administrator. If unset: anyone @dissidentbot follows can issue commands
+  admin: "boris"
 }

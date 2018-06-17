@@ -52,8 +52,16 @@ class Heckles
 end
 
 # This is the class which does all the work
-class Dissident  
-
+class Dissident
+  
+  attr_accessor :online
+  attr_reader :started
+  attr_reader :hostname
+  attr_reader :config
+  attr_accessor :admin
+  attr_accessor :reply_probability
+  attr_accessor :self_reply_probability
+  
   # startup: inits the clients. It does not attempt to talk to Twitter though,
   # so invalid credentials are not picked up
   def initialize
@@ -87,12 +95,19 @@ class Dissident
     @self_reply_probability = int_option(:self_reply_probability, @reply_probability)
     @sleeptime = int_option(:sleeptime, 15)
     @minsleeptime = int_option(:minsleeptime, 30)
+    @admin = string_option(:admin, "")
   end
   
   # load an integer option; if the default value is missing or negative, use the default
   def int_option(opt, defval)
     r = @config[opt]
     (r.nil? or r < 0) ? defval : r
+  end
+
+  # String opt will leave "" as a valid number
+  def string_option(opt, defval)
+    r = @config[opt]
+    r.nil? ? defval : r
   end
   
   # Log at info
@@ -275,7 +290,12 @@ class Dissident
     username = user.screen_name.downcase
     return if username.eql?@myname
     log "Direct message from #{user.screen_name}: #{event.text}"
-    response = process_direct_message(event.text)
+    if @admin.eql?"" or @admin.eql?username
+      response = process_direct_message(event.text)
+    else
+      log "Ignoring message from #{username} as not #{@admin}"
+      response = "Not admin user: rejected"
+    end
     log "Response: #{response}"
     @rest.create_direct_message(user, response)
   end
@@ -328,7 +348,7 @@ class Dissident
   
   # Build the startup message
   def startup_message
-    "#{@myname} dissenting from #{target_count} accounts on #{@hostname} @ #{@start_local_time}"
+    "#{@myname} dissenting from #{target_count} accounts on #{@hostname} @ #{@start_local_time}; admin=#{@admin}"
   end
 
   # Listen to streaming events and process them
