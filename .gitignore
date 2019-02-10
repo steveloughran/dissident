@@ -30,3 +30,8 @@
 
 /conf/secrets.rb
 /logs
+*.ipr
+*.iml
+*.iws
+
+

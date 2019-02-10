@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby -w
 # to run: dissident start
 
+require 'rubygems'
 require 'twitter'
 require 'socket'
 require 'logger'
