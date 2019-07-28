@@ -5,11 +5,13 @@ require 'rubygems'
 require 'twitter'
 require 'socket'
 require 'logger'
+require_relative 'base'
 require_relative 'heckles'
+require_relative 'transport'
 
 
 # This is the class which does all the work
-class Dissident
+class Dissident < Base 
   
   attr_accessor :online
   attr_reader :started
@@ -22,11 +24,10 @@ class Dissident
   # startup: inits the clients. It does not attempt to talk to Twitter though,
   # so invalid credentials are not picked up
   def initialize
-    @log = Logger.new(STDOUT)
-    @log.level = Logger::DEBUG
+    super
     reload
-    @rest = Twitter::REST::Client.new(@config)
-    @streaming = Twitter::Streaming::Client.new(@config)
+    @rest = Twitter::REST::Client.new(@config.map)
+    @streaming = Twitter::Streaming::Client.new(@config.map)
     log "my name is \"#{@myname}\""
     @started = Time.now.utc
     @start_local_time = @started.getlocal
@@ -40,55 +41,29 @@ class Dissident
   end
   
   def reload
-    @config = eval(File.open('conf/secrets.rb') {|f| f.read })
-    @log.debug "config is #{@config}"
+    @config = ConfigMap.new
+    @config.load('conf/secrets.rb')
     @myname = @config[:myname]
     if @myname.nil? or @myname.length == 0
       @log.warn "Configuration doesn't include :myname entry"
       @myname = "dissidentbot"
     end
     @myname = @myname.downcase
-    @reply_probability = int_option(:reply_probability, 75)
-    @self_reply_probability = int_option(:self_reply_probability, @reply_probability)
-    @sleeptime = int_option(:sleeptime, 15)
-    @minsleeptime = int_option(:minsleeptime, 30)
-    @admin = string_option(:admin, "")
+    @reply_probability = @config.int_option(:reply_probability, 75)
+    @self_reply_probability = @config.int_option(:self_reply_probability, @reply_probability)
+    @sleeptime = @config.int_option(:sleeptime, 15)
+    @minsleeptime = @config.int_option(:minsleeptime, 30)
+    @admin = @config.string_option(:admin, "")
+    @transport = Transport.new()
   end
   
-  # load an integer option; if the default value is missing or negative, use the default
-  def int_option(opt, defval)
-    r = @config[opt]
-    (r.nil? or r < 0) ? defval : r
-  end
-
-  # String opt will leave "" as a valid number
-  def string_option(opt, defval)
-    r = @config[opt]
-    r.nil? ? defval : r
-  end
-  
-  # Log at info
-  def log(message)
-    @log.info(message)
-  end
-
-  # Log at warn
-  def warn(message)
-    @log.warn(message)
-  end
-
-  # Log at error
-  def error(message)
-    @log.error(message)
-  end
-
   # given a tweet, identify its sender
   def tweet_sender(tweet)
      tweet.user.screen_name.downcase
   end
 
   def is_response(text) 
-    text.include?"RT "
+    text.include? "RT "
   end
 
   # Generate a reply for the given user, if they are targeted and it is not a reply
@@ -253,8 +228,7 @@ class Dissident
       log "Ignoring message from #{username} as not #{@admin}"
       response = "Not admin user: rejected"
     end
-    log "Response: #{response}"
-    @rest.create_direct_message(user, response)
+    @transport.direct(user, response)
   end
 
   # get the shortname of this host for reporting
@@ -300,7 +274,7 @@ class Dissident
   # Say anything on twitter
   def say(message)
     log message
-    @rest.update(message)
+    @transport.say(message)
   end
   
   # Build the startup message
@@ -319,7 +293,7 @@ class Dissident
     lives = 10
     say(startup_message())
     begin
-      @streaming.user do |event|
+      @transport.eventstream do |event|
          process(event)
          break if @shouldExit
       end
