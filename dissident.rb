@@ -26,8 +26,9 @@ class Dissident < Base
   def initialize
     super
     reload
+    # start the Twitter transport
     @transport = Transport.new()
-    #@transport.initialize
+    @transport.start(@config) 
     log "my name is \"#{@myname}\""
     @started = Time.now.utc
     @start_local_time = @started.getlocal
@@ -165,7 +166,7 @@ class Dissident < Base
       else
         log "tweeting #{status} to #{status_id}"
         @sent_count += 1
-        @rest.update(status, in_reply_to_status_id: status_id)      
+        @transport.send(status_id, status)      
       end
     else
       log "Dropping loopback message"

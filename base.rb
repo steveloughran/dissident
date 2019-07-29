@@ -35,6 +35,8 @@ end
 # it can load from a file
 class ConfigMap < Base
 
+  attr_reader :config
+
   def initialize
     super
     @config = Hash.new
@@ -42,8 +44,7 @@ class ConfigMap < Base
 
   def load(path)
     @config = eval(File.open(path) {|f| f.read })
-    log "config is #{@config}"
-
+    # log "config is #{@config}"
   end
 
   # load an integer option; if the default value is missing or negative, use the default
@@ -58,14 +59,13 @@ class ConfigMap < Base
     r.nil? ? defval : r
   end
 
-  # get the actual map to pass along
-  def map
-    @config
-  end
-
   # lookup
   def get(val)
     @config[val]
+  end
+
+  def map
+    @config
   end
 
 end
