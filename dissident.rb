@@ -26,8 +26,7 @@ class Dissident < Base
   def initialize
     super
     reload
-    @rest = Twitter::REST::Client.new(@config.map)
-    @streaming = Twitter::Streaming::Client.new(@config.map)
+    @transport = Transport.new()
     log "my name is \"#{@myname}\""
     @started = Time.now.utc
     @start_local_time = @started.getlocal
@@ -43,7 +42,7 @@ class Dissident < Base
   def reload
     @config = ConfigMap.new
     @config.load('conf/secrets.rb')
-    @myname = @config[:myname]
+    @myname = @config.get(:myname)
     if @myname.nil? or @myname.length == 0
       @log.warn "Configuration doesn't include :myname entry"
       @myname = "dissidentbot"
@@ -54,13 +53,13 @@ class Dissident < Base
     @sleeptime = @config.int_option(:sleeptime, 15)
     @minsleeptime = @config.int_option(:minsleeptime, 30)
     @admin = @config.string_option(:admin, "")
-    @transport = Transport.new()
   end
   
   # given a tweet, identify its sender
   def tweet_sender(tweet)
      tweet.user.screen_name.downcase
   end
+
 
   def is_response(text) 
     text.include? "RT "
@@ -115,7 +114,6 @@ class Dissident < Base
   end
 
   
-
   # Generate a reply for the given user, if they are targeted and it is not a reply
   # the latter keeps the noise down, and avoids loops.
   # (sender: String, text: String) -> String or nul
@@ -123,7 +121,7 @@ class Dissident < Base
     if not sender.eql?@myname
       hecklename = build_target(sender, text)
       heckles = Heckles.new()
-      heckles.init(hecklename)
+      heckles.initForUser(hecklename)
       if not heckles.empty? 
         return "@#{sender} #{heckles.heckle}"
       end
@@ -220,9 +218,9 @@ class Dissident < Base
   def on_direct_message(event)
     user = event.sender
     username = user.screen_name.downcase
-    return if username.eql?@myname
+    return if username.eql? @myname
     log "Direct message from #{user.screen_name}: #{event.text}"
-    if @admin.eql?"" or @admin.eql?username
+    if @admin.eql? "" or @admin.eql? username
       response = process_direct_message(event.text)
     else
       log "Ignoring message from #{username} as not #{@admin}"

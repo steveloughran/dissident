@@ -8,6 +8,27 @@ class Base
     @log = Logger.new(STDOUT)
     @log.level = Logger::DEBUG
   end
+
+  # Log at info
+  def log(message)
+    @log.info(message)
+  end
+
+  # Log at info
+  def debug(message)
+    @log.debug(message)
+  end
+
+  # Log at warn
+  def warn(message)
+    @log.warn(message)
+  end
+
+  # Log at error
+  def error(message)
+    @log.error(message)
+  end
+
 end
 
 # Configuration with accessors;
@@ -21,7 +42,7 @@ class ConfigMap < Base
 
   def load(path)
     @config = eval(File.open(path) {|f| f.read })
-    @log.debug "config is #{@config}"
+    log "config is #{@config}"
 
   end
 
@@ -40,6 +61,11 @@ class ConfigMap < Base
   # get the actual map to pass along
   def map
     @config
+  end
+
+  # lookup
+  def get(val)
+    @config[val]
   end
 
 end
