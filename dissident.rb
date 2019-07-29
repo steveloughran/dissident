@@ -27,6 +27,7 @@ class Dissident < Base
     super
     reload
     @transport = Transport.new()
+    #@transport.initialize
     log "my name is \"#{@myname}\""
     @started = Time.now.utc
     @start_local_time = @started.getlocal
@@ -59,7 +60,6 @@ class Dissident < Base
   def tweet_sender(tweet)
      tweet.user.screen_name.downcase
   end
-
 
   def is_response(text) 
     text.include? "RT "

@@ -6,12 +6,10 @@ require 'socket'
 require_relative 'base'
 require_relative 'heckles'
 
-class Transport
+class Transport < Base
 
   def initialize
     super
-    @log = Logger.new(STDOUT)
-    @log.level = Logger::DEBUG
   end
 
   def start(config) 
