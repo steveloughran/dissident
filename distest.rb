@@ -1,9 +1,8 @@
-require_relative 'dissident'
-require_relative 'heckles'
 require 'test/unit'
 require 'twitter'
 require 'socket'
-require 'logger'
+require_relative 'dissident'
+require_relative 'heckles'
 
 
 class DisTest < Test::Unit::TestCase

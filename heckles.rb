@@ -4,6 +4,10 @@ require_relative 'base'
 # designed so that they can be isolated/persisted if need be
 class Heckles < Base
 
+  def initialize
+    super
+  end
+
   # Initialise: pass in username
   # return true iff there is data
   def initForUser(username)

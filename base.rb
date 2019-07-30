@@ -1,4 +1,5 @@
 # base.rb
+require 'logger'
 
 # general base class with some common methods for
 # setup and logging
