@@ -9,9 +9,11 @@ class Heckles < Base
   end
 
   # Initialise: pass in username
+  #   dir: directory of data
+  #   username: user
   # return true iff there is data
-  def initForUser(username)
-    filename = "data/#{username}.txt".downcase
+  def initForUser(dir, username)
+    filename = "#{dir}/#{username}.txt".downcase
     initFromFile(filename)
   end
 

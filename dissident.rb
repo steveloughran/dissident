@@ -6,7 +6,7 @@ require_relative 'heckles'
 require_relative 'engine'
 require_relative 'transport'
 
-# This is the class which does all the work
+# Entry point and REPL loop.
 class Dissident < Base 
   
   attr_accessor :online
@@ -22,8 +22,17 @@ class Dissident < Base
   def initialize
     super
     @engine = Engine.new()
+    reload
   end
-  
+
+  # Start the engine.
+  # secrets_file: path to the secrets.
+  # target_dir: directories of targets
+  def start(secrets_file, target_dir, transport)
+    @engine.start(secrets_file, target_dir, TwitterTransport.new())
+  end
+
+  # engine to reload everything  
   def reload
     @engine.reload
   end
@@ -31,7 +40,7 @@ class Dissident < Base
 
   # Listen to streaming events and process them
   def listen
-    if @initialized.nil?
+    if engine.initialized.nil?
       error("Not initialized")
       return
     end
@@ -63,6 +72,7 @@ class Dissident < Base
 
   # main() entry point
   def main(args)
+    start('conf/secrets.rb', "data/*.txt")
     if @initialized.nil?
       error "Not initialized"
       return
@@ -90,5 +100,5 @@ end
 
 # this is where the work is started
 # split so that irb sessions have access to the dissident instances without it starting to listen
-bot = Dissident.new()
-bot.main(ARGV)
+#bot = Dissident.new()
+#bot.main(ARGV)

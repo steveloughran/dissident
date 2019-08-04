@@ -39,13 +39,14 @@ class Engine < Base
     @reload_count = 0
     @sent_count = 0
     @update_count = 0
-    start('conf/secrets.rb', "data/*.txt", TwitterTransport.new())
-    reload
   end
 
-  # start the transport
+  # Start the engine.
+  # secrets_file: path to the secrets.
+  # target_dir: directories of targets
+  # transport: Twitter transport.
   def start(secrets_file, target_dir, transport)
-    raise "already initialized" if @initialized
+    raise 'already initialized' if @initialized
     @initialized = true
     @secrets_file = secrets_file
     @target_dir = target_dir
@@ -58,7 +59,7 @@ class Engine < Base
     @start_local_time = @started.getlocal
     @hostname = shortname()
     @online = true
-    log "Hello, my name is \"#{@myname}\ -prepare to dissent"
+    log "Hello, my name is \"#{@myname}\" -prepare to dissent"
   end
   
   def reload
@@ -75,13 +76,18 @@ class Engine < Base
     @sleeptime = @config.int_option(:sleeptime, 15)
     @minsleeptime = @config.int_option(:minsleeptime, 30)
     @admin = @config.string_option(:admin, "")
+
+    # check the target dir, even though we aren't going to load it
+    raise "Not a directory: \"#{@target_dir}\"" if not File.directory?(@target_dir)
   end
   
   # given a tweet, identify its sender
+  # returns the sender screen name in lower case.
   def tweet_sender(tweet)
      tweet.user.screen_name.downcase
   end
 
+  # is this message a response
   def is_response(text) 
     text.include? "RT "
   end
@@ -142,7 +148,7 @@ class Engine < Base
     if not sender.eql? @myname
       hecklename = build_target(sender, text)
       heckles = Heckles.new()
-      heckles.initForUser(hecklename)
+      heckles.initForUser(@target_dir, hecklename)
       if not heckles.empty? 
         return "@#{sender} #{heckles.heckle}"
       end
