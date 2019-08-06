@@ -36,7 +36,7 @@ class Dissident < Base
   def reload
     @engine.reload
   end
-  
+
 
   # Listen to streaming events and process them
   def listen

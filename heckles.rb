@@ -4,10 +4,6 @@ require_relative 'base'
 # designed so that they can be isolated/persisted if need be
 class Heckles < Base
 
-  def initialize
-    super
-  end
-
   # Initialise: pass in username
   #   dir: directory of data
   #   username: user

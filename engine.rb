@@ -54,6 +54,7 @@ class Engine < Base
     # this loads the config map
     reload
 
+    # now lets start
     @transport.start(@config) 
     @started = Time.now.utc
     @start_local_time = @started.getlocal
@@ -62,6 +63,7 @@ class Engine < Base
     log "Hello, my name is \"#{@myname}\" -prepare to dissent"
   end
   
+  # Reload all state
   def reload
     @config = ConfigMap.new
     @config.load(@secrets_file)
@@ -84,13 +86,14 @@ class Engine < Base
   # given a tweet, identify its sender
   # returns the sender screen name in lower case.
   def tweet_sender(tweet)
-     tweet.user.screen_name.downcase
+    tweet.user.screen_name.downcase
   end
 
   # is this message a response
   def is_response(text) 
-    text.include? "RT "
-  end
+#    text.include? "RT "
+    text.start_with? "RT "
+end
 
   # Generate a reply for the given user, if they are targeted and it is not a reply
   # the latter keeps the noise down, and avoids loops.
@@ -302,15 +305,18 @@ class Engine < Base
     
   # Say anything on twitter
   def say(message)
-    log message
     @transport.say(message)
+  end
+  
+  # Say anything on twitter
+  def direct(user, message)
+    @transport.direct(user, message)
   end
   
   # Build the startup message
   def startup_message
     "#{@myname} dissenting from #{target_count} accounts on #{@hostname} @ #{@start_local_time}; admin=#{@admin}"
   end
-
   
 end
 

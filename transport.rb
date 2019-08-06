@@ -4,8 +4,7 @@ require 'twitter'
 require 'socket'
 require_relative 'base'
 
-# This is the stub transort, which can be used
-# in testing
+# This is the stub transort.
 class Transport < Base
   def initialize
     super
@@ -27,15 +26,15 @@ class Transport < Base
   end
 
   # send a message in reply to another tweet
-  def send(status, id)
+  def send(status_id, status)
     checkStarted
-    log message
+    log "To #{status_id}: #{status}"
   end
 
   # send a direct message
   def direct(user, response)
     checkStarted
-    log "Response: #{response}"
+    log "DM: to #{user}: #{response}"
   end
 
   # The event stream to listen to
@@ -73,7 +72,7 @@ class TwitterTransport < Transport
   end
 
   # send a message in reply to another tweet
-  def send(status, id)
+  def send(status_id, status)
     super
   end
 
@@ -91,7 +90,45 @@ class TwitterTransport < Transport
 
 end
 
+# Fake transport collects messages
+class FakeTransport  < Transport
+  attr_accessor :said
+  attr_accessor :sent
+  attr_accessor :directed
+  def initialize
+    super
+    @said =  Array.new()
+    @messages =  Array.new()
+    @directed =  Array.new()
+  end
+
+    # Say anything on twitter
+    def say(message)
+      super
+      said.push(message)
+    end
+  
+    # send a message in reply to another tweet
+    def send(status_id, status)
+      super
+      sent.push(status)
+    end
+  
+    # send a direct message
+    def direct(user, message)
+      super
+      @directed.push(message)
+    end
+end
+
+
+# Implementation of the update operation
+
 class Updater < Base
+  attr_accessor :updates
+  def initialize
+    @updates = 0
+  end
   def update
     ""
   end
@@ -113,4 +150,6 @@ class GitUpdater < Updater
     
   
 end
+
+
 

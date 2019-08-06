@@ -35,3 +35,5 @@
 *.iws
 
 
+.vscode/launch.json
+dissident.xcworkspace/contents.xcworkspacedata
