@@ -48,6 +48,7 @@ class Engine < Base
   def start(secrets_file, target_dir, transport)
     raise 'already initialized' if @initialized
     @initialized = true
+    log "Starting dissidentbot with secrets file #{secrets_file} and target directory #{target_dir}"
     @secrets_file = secrets_file
     @target_dir = target_dir
     @transport = transport
@@ -91,9 +92,9 @@ class Engine < Base
 
   # is this message a response
   def is_response(text) 
-#    text.include? "RT "
+  #    text.include? "RT "
     text.start_with? "RT "
-end
+  end
 
   # Generate a reply for the given user, if they are targeted and it is not a reply
   # the latter keeps the noise down, and avoids loops.
@@ -257,9 +258,14 @@ end
       response = "Not admin user: rejected"
     end
     # issue the message
+    direct(user, response)
+  end
+  
+  # send a direct message
+  def direct(user, response)
     @transport.direct(user, response)
   end
-
+  
   # get the shortname of this host for reporting
   def shortname
     Socket.gethostname.split(".")[0]
@@ -315,7 +321,7 @@ end
   
   # Build the startup message
   def startup_message
-    "#{@myname} dissenting from #{target_count} accounts on #{@hostname} @ #{@start_local_time}; admin=#{@admin}"
+    "#{@myname} dissenting from #{target_count} accounts on #{@hostname} @ #{@start_local_time}; admin=@#{@admin}"
   end
   
 end

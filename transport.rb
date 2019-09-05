@@ -56,6 +56,7 @@ class TwitterTransport < Transport
     super(config)
     @rest = Twitter::REST::Client.new(config.map)
     @streaming = Twitter::Streaming::Client.new(config.map)
+    checkStarted
   end
 
   # validate internal state before an operation
@@ -85,6 +86,7 @@ class TwitterTransport < Transport
   # The event stream to listen to
   def eventstream
     checkStarted
+    log("Listening to the event stream of #{@streaming}")
     @streaming.user 
   end
 

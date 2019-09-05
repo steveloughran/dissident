@@ -22,15 +22,8 @@ class Dissident < Base
   def initialize
     super
     @engine = Engine.new()
-    reload
   end
 
-  # Start the engine.
-  # secrets_file: path to the secrets.
-  # target_dir: directories of targets
-  def start(secrets_file, target_dir, transport)
-    @engine.start(secrets_file, target_dir, TwitterTransport.new())
-  end
 
   # engine to reload everything  
   def reload
@@ -40,14 +33,15 @@ class Dissident < Base
 
   # Listen to streaming events and process them
   def listen
-    if engine.initialized.nil?
+    if @engine.initialized.nil?
       error("Not initialized")
       return
     end
     log "starting to listen"
-    log status_report
-    lives = 10
-    say(@engine.startup_message())
+    log @engine.status_report
+    lives = 1
+    @engine.say(@engine.startup_message)
+    #@engine.direct("@#{@engine.admin}", @engine.startup_message)
     begin
       @engine.eventstream do |event|
         @engine.process(event)
@@ -60,23 +54,28 @@ class Dissident < Base
       lives = lives - 1
       if lives > 0
         log "Remaining lives #{lives}"
-        sleep_slightly
+        @engine.sleep_slightly()
         retry 
       else
         error "Too many failures, shutting down"
       end
     ensure
-      say("#{@hostname} shutting down")
+      @engine.say("#{@engine.hostname} shutting down")
     end
   end
 
+  # Start the engine.
+  # secrets_file: path to the secrets.
+  # target_dir: directories of targets
+  def start_engine(secrets_file, target_dir)
+    @engine.start(secrets_file, target_dir, TwitterTransport.new())
+    @initialized
+  end
+  
   # main() entry point
   def main(args)
-    start('conf/secrets.rb', "data/*.txt")
-    if @initialized.nil?
-      error "Not initialized"
-      return
-    end
+    start_engine('conf/secrets.rb', "data")
+    reload
     log "dissident booting as '#{@myname}'"
     usage = "Usage: dissident start"
     if args.length == 0
@@ -91,14 +90,11 @@ class Dissident < Base
       end
     end
   end
-  
-  def start()
-    main(["start"])
-  end
+
   
 end
 
 # this is where the work is started
 # split so that irb sessions have access to the dissident instances without it starting to listen
-#bot = Dissident.new()
-#bot.main(ARGV)
+bot = Dissident.new()
+bot.main(ARGV)

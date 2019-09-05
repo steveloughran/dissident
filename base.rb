@@ -44,6 +44,8 @@ class ConfigMap < Base
   end
 
   def load(path)
+    raise "no file to open" if path.nil?
+    
     @config = eval(File.open(path) {|f| f.read })
     # log "config is #{@config}"
   end
